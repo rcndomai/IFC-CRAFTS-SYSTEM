@@ -1,0 +1,74 @@
+package ClinicReservationSystem.UIPage;
+
+import java.awt.*;
+import javax.swing.*; 
+
+public class HomePage extends Window {
+
+        @Override
+        protected void setupComponents() {
+            setLayout(null);
+
+        // top banner logo of clinic
+        ImageIcon logo = new ImageIcon("C:\\Users\\User1\\Documents\\OOP_PROJECT_SYSTEM\\ClinicReservationSystem\\Images\\logoInfo.png");
+        Image img = logo.getImage().getScaledInstance(500, 180, Image.SCALE_SMOOTH); // width, height, smooth scaling
+        JLabel finalLogo = new JLabel(new ImageIcon(img));
+        finalLogo.setBounds(10, 5, 500, 180);
+        add(finalLogo);
+
+        // Buttons
+        String btnLabels[] = {"DOCTORS", "AGENDA", "PATIENT DETAILS", "PAYMENT"};
+        String btnIcons[] = {
+           "C:\\Users\\User1\\Documents\\OOP_PROJECT_SYSTEM\\ClinicReservationSystem\\Images\\DocIcon.jpg", 
+            "C:\\Users\\User1\\Documents\\OOP_PROJECT_SYSTEM\\ClinicReservationSystem\\Images\\schedIcon.png",
+            "C:\\Users\\User1\\Documents\\OOP_PROJECT_SYSTEM\\ClinicReservationSystem\\Images\\PatIcon (2).png", 
+           "C:\\Users\\User1\\Documents\\OOP_PROJECT_SYSTEM\\ClinicReservationSystem\\Images\\PayIcon (2).png"
+        };
+
+        int btnWidth = 220, btnHeight = 220, gap = 30, startX = 315, y = 320;
+        for (int i = 0; i < btnLabels.length; i++) {
+            final int index = i;
+            HomePageButton Hbtn = new HomePageButton(btnIcons[index]);
+            
+            // makes the button with icon and text
+            Hbtn.setText("<html><center>" +btnLabels[index]+ "</center></html>");
+            Hbtn.setFont(new Font("Serif", Font.PLAIN, 22));
+            Hbtn.setBounds(startX + (index * (btnWidth + gap)), y, btnWidth, btnHeight);
+            Hbtn.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 3, true));
+            Hbtn.setHorizontalTextPosition(SwingConstants.CENTER);
+            Hbtn.setVerticalTextPosition(SwingConstants.BOTTOM);
+            Hbtn.setForeground(Color.DARK_GRAY);
+            add(Hbtn);
+
+            // gagawin ng each button pag clinick
+            Hbtn.onClick(e -> {
+                switch (index) {
+                    case 0: // Doctors
+                        DoctorsPage.main(new String[]{});
+                        dispose();
+                        break;
+                    case 1: // Agenda
+                        AgendaPage.main(new String[]{});
+                        dispose();
+                        break;
+                    case 2: // Patient Details
+                        PatientDetails.main(new String[]{});
+                        dispose();
+                        break;
+                    case 3: // Payment
+                        PaymentPage.main(new String[]{});
+                        dispose();
+                        break;
+                }
+            });
+        }
+
+        setVisible(true);
+        
+    }
+
+    public static void main(String[] args) {
+        new HomePage();
+    }
+
+}
