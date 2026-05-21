@@ -13,7 +13,7 @@ CREATE TABLE Affiliates (
 	affiliate_id VARCHAR(30) PRIMARY KEY, /* unique promo code for affiliates */
 	aff_name VARCHAR(100) NOT NULL,
 	start_date DATE NOT NULL,
-	end_date DATE GENERATED ALWAYS AS ((start_date + 30)::DATE) STORED,
+	end_date DATE NOT NULL,
 	aff_status VARCHAR(30) NOT NULL,
 	soc_med_acc VARCHAR(100)
 );
