@@ -1,0 +1,92 @@
+// for tables
+
+public customer() {
+        initComponents();
+        loadCustomerTable();
+        customizeCustomerTable();
+        
+        javax.swing.table.DefaultTableCellRenderer centerRenderer =
+                new javax.swing.table.DefaultTableCellRenderer();
+
+        centerRenderer.setHorizontalAlignment(javax.swing.JLabel.CENTER);
+
+        for (int i = 0; i < customertable.getColumnCount(); i++) {
+            customertable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+    }
+
+
+private void customizeCustomerTable() {
+        
+        customertable.setBackground(java.awt.Color.WHITE);
+        customertable.setForeground(new java.awt.Color(25, 25, 25));
+        customertable.setFont(new java.awt.Font("Baskerville", java.awt.Font.PLAIN, 18));
+        customertable.setRowHeight(38);
+
+        customertable.setGridColor(new java.awt.Color(220, 220, 220));
+        customertable.setShowGrid(true);
+        customertable.setShowVerticalLines(false);
+
+        customertable.setSelectionBackground(new java.awt.Color(35, 35, 35));
+        customertable.setSelectionForeground(java.awt.Color.WHITE);
+
+        customertable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+        customertable.setFillsViewportHeight(true);
+        
+        customertable.getColumnModel().getColumn(0).setMinWidth(45);
+        customertable.getColumnModel().getColumn(0).setPreferredWidth(55);
+        customertable.getColumnModel().getColumn(0).setMaxWidth(65);
+
+        javax.swing.table.JTableHeader header = customertable.getTableHeader();
+        header.setPreferredSize(new java.awt.Dimension(header.getWidth(), 42));
+        header.setReorderingAllowed(false);
+        header.setResizingAllowed(true);
+
+        javax.swing.table.DefaultTableCellRenderer headerRenderer =
+                new javax.swing.table.DefaultTableCellRenderer();
+
+        headerRenderer.setHorizontalAlignment(javax.swing.JLabel.CENTER);
+        headerRenderer.setBackground(new java.awt.Color(28, 28, 28));
+        headerRenderer.setForeground(java.awt.Color.WHITE);
+        headerRenderer.setFont(new java.awt.Font("Big Caslon", java.awt.Font.BOLD, 18));
+        headerRenderer.setBorder(javax.swing.BorderFactory.createMatteBorder(
+                0, 0, 1, 1, new java.awt.Color(65, 65, 65)
+        ));
+
+        for (int i = 0; i < customertable.getColumnModel().getColumnCount(); i++) {
+            customertable.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
+        }
+    }
+
+
+private void loadCustomerTable() {
+        String sql = "SELECT customer_id, customer_name, customer_address, contact_num FROM dbo.Customers";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+
+            DefaultTableModel model = new DefaultTableModel(
+                new String[]{"No.", "Customer ID", "Name", "Address", "Contact Number"}, 0
+            );
+
+            int no = 1;
+
+            while (rs.next()) {
+                model.addRow(new Object[]{
+                    no++,
+                    rs.getInt("customer_id"),
+                    rs.getString("customer_name"),
+                    rs.getString("customer_address"),
+                    rs.getString("contact_num")
+                });
+            }
+
+            customertable.setModel(model);
+
+            customizeCustomerTable();
+
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error loading customers: " + e.getMessage());
+        }
+    }
