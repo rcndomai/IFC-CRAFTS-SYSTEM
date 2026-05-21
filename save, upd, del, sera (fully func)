@@ -1,4 +1,4 @@
-// save, upd, delete
+// save, upd, delete, serj
 
 //save
 String name = customername.getText().trim();
@@ -234,3 +234,59 @@ String idText = customerID.getText().trim();
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
         }
     }         
+
+
+//serj
+String inputCustomerID = JOptionPane.showInputDialog(this, "Enter Customer ID to Search:");
+
+        if (inputCustomerID == null || inputCustomerID.trim().isEmpty()) {
+            return;
+        }
+
+        try {
+            int customerId = Integer.parseInt(inputCustomerID.trim());
+
+            String sql = "SELECT * FROM dbo.Customers WHERE customer_id = ?";
+
+            Connection conn = getConnection();
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setInt(1, customerId);
+
+            ResultSet rs = pst.executeQuery();
+
+            if (rs.next()) {
+                DefaultTableModel model = new DefaultTableModel(
+                    new String[]{"Customer ID", "Name", "Address", "Contact Number"}, 0
+                );
+
+                model.addRow(new Object[]{
+                    rs.getInt("customer_id"),
+                    rs.getString("customer_name"),
+                    rs.getString("customer_address"),
+                    rs.getString("contact_num")
+                });
+
+                JTable table = new JTable(model);
+
+                JFrame resultFrame = new JFrame("Search Result");
+                resultFrame.add(new javax.swing.JScrollPane(table));
+                resultFrame.setSize(800, 150);
+                resultFrame.setLocationRelativeTo(this);
+                resultFrame.setVisible(true);
+
+            } else {
+                JOptionPane.showMessageDialog(this, "No record found for Customer ID: " + inputCustomerID);
+            }
+
+            rs.close();
+            pst.close();
+            conn.close();
+
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Customer ID must be a number.");
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error searching record: " + ex.getMessage());
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+        }
+    }                
