@@ -190,74 +190,99 @@ public class affiliate extends javax.swing.JPanel {
 
     // save button
 
+
     private void savebtnActionPerformed(java.awt.event.ActionEvent evt) {                                        
 
         DefaultTableModel model = (DefaultTableModel) affiliatetable.getModel();
 
+        StringBuilder preview = new StringBuilder();
+
         try {
+            // PREVIEW
+            for (int i = 0; i < model.getRowCount(); i++) {
 
-        for (int i = 0; i < model.getRowCount(); i++) {
+                String id = model.getValueAt(i, 0).toString();
+                String name = model.getValueAt(i, 1).toString();
+                String start = model.getValueAt(i, 2).toString();
+                String end = model.getValueAt(i, 3).toString();
+                String status = model.getValueAt(i, 4).toString();
+                String social = model.getValueAt(i, 5) != null
+                        ? model.getValueAt(i, 5).toString()
+                        : "";
 
-            String OG_Id = originalIds[i];
-            String new_Id = model.getValueAt(i, 0).toString();
-            String name = model.getValueAt(i, 1).toString();
-           
-            Object startObj = model.getValueAt(i, 2);
-            Object endObj = model.getValueAt(i, 3);
+                preview.append("ID: ").append(id).append("\n")
+                       .append("Name: ").append(name).append("\n")
+                       .append("Start Date: ").append(start).append("\n")
+                       .append("End Date: ").append(end).append("\n")
+                       .append("Status: ").append(status).append("\n")
+                       .append("Social: ").append(social).append("\n\n");
+            }
 
-            java.sql.Date startDate = null;
-            java.sql.Date endDate = null;
+            // PREVIEW
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "SAVE ALL CHANGES?\n\n" + preview.toString(),
+                    "Confirm Save",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.INFORMATION_MESSAGE
+            );
 
-            try {
+            if (confirm != JOptionPane.YES_OPTION) {
+                return; 
+            }
+
+            for (int i = 0; i < model.getRowCount(); i++) {
+
+                String OG_Id = originalIds[i];
+                String new_Id = model.getValueAt(i, 0).toString();
+                String name = model.getValueAt(i, 1).toString();
+
+                Object startObj = model.getValueAt(i, 2);
+                Object endObj = model.getValueAt(i, 3);
+
+                java.sql.Date startDate = null;
+                java.sql.Date endDate = null;
+
                 if (startObj instanceof java.util.Date) {
                     startDate = new java.sql.Date(((java.util.Date) startObj).getTime());
-                } else if (startObj != null) {
-                    startDate = java.sql.Date.valueOf(startObj.toString()); 
                 }
 
                 if (endObj instanceof java.util.Date) {
                     endDate = new java.sql.Date(((java.util.Date) endObj).getTime());
-                } else if (endObj != null) {
-                    endDate = java.sql.Date.valueOf(endObj.toString()); 
                 }
 
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Invalid date format! Use YYYY-MM-DD.");
-                return;
+                String status = model.getValueAt(i, 4).toString();
+
+                String social = model.getValueAt(i, 5) != null
+                        ? model.getValueAt(i, 5).toString()
+                        : "";
+
+                String sql = "UPDATE Affiliates SET "
+                        + "affiliate_id=?, aff_name=?, start_date=?, end_date=?, aff_status=?, soc_med_acc=? "
+                        + "WHERE affiliate_id=?";
+
+                PreparedStatement pst = conn.prepareStatement(sql);
+
+                pst.setString(1, new_Id);
+                pst.setString(2, name);
+                pst.setDate(3, startDate);
+                pst.setDate(4, endDate);
+                pst.setString(5, status);
+                pst.setString(6, social);
+                pst.setString(7, OG_Id);
+
+                pst.executeUpdate();
             }
-
-            String status = model.getValueAt(i, 4).toString();
-
-            String social = model.getValueAt(i, 5) != null
-                    ? model.getValueAt(i, 5).toString()
-                    : "";
-
-            String sql = "UPDATE Affiliates SET "
-                    + "affiliate_id=?, aff_name=?, start_date=?, end_date=?, aff_status=?, soc_med_acc=? "
-                    + "WHERE affiliate_id=?";
-
-            PreparedStatement pst = conn.prepareStatement(sql);
-
-            pst.setString(1, new_Id);
-            pst.setString(2, name);
-            pst.setDate(3, startDate);
-            pst.setDate(4, endDate);
-            pst.setString(5, status);
-            pst.setString(6, social);
-            pst.setString(7, OG_Id);
-
-            int rows = pst.executeUpdate();
-
-            System.out.println("Updated rows: " + rows);
-        }
 
             JOptionPane.showMessageDialog(this, "All changes saved successfully!");
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
         }
+
         loadAffiliateTable();
-    }      
+   
+    }       
 
 // REFRESH
   // REFRESH BUTTON
