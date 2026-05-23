@@ -55,14 +55,12 @@ CREATE TABLE Order_Items (
 CREATE OR REPLACE FUNCTION set_price_at_order()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Only auto-fill if user did not manually provide value
-    IF NEW.price_at_order IS NULL OR NEW.price_at_order = 0 THEN
 
-        SELECT NEW.quantity * p.unit_price
-        INTO NEW.price_at_order
-        FROM Products p
-        WHERE p.product_id = NEW.product_id;
-    END IF;
+    SELECT NEW.quantity * p.unit_price
+    INTO NEW.price_at_order
+    FROM Products p
+    WHERE p.product_id = NEW.product_id;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
