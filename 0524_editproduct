@@ -62,7 +62,7 @@ public class editproduct extends javax.swing.JPanel {
     private void generateProductId() {
 
         String sql =
-            "SELECT ISNULL(MAX(product_id), 999) + 1 AS next_id FROM dbo.Products";
+            "SELECT ISNULL(MAX(product_id), 1999) + 1 AS next_id FROM dbo.Products";
 
         try {
             PreparedStatement pst = conn.prepareStatement(sql);
@@ -352,11 +352,11 @@ public class editproduct extends javax.swing.JPanel {
             }
 
             String message = "Are you sure you want to save this product record?\n\n"
-                    + "Product Information:\n"
-                    + "Product Name: " + name + "\n"
-                    + "Product Type: " + type + "\n"
-                    + "Unit Price: " + price + "\n"
-                    + "Stock: " + productStock;
+                + "Product Information:\n"
+                + "Product Name: " + name + "\n"
+                + "Product Type: " + type + "\n"
+                + "Unit Price: " + priceText + "\n"
+                + "Stock: " + productStock;
 
             int confirm = JOptionPane.showConfirmDialog(
                     this,
@@ -370,9 +370,10 @@ public class editproduct extends javax.swing.JPanel {
             }
 
             String sql = "INSERT INTO dbo.Products (product_name, product_type, unit_price, stock) VALUES (?, ?, ?, ?)";
-
             Connection conn = getConnection();
             PreparedStatement pst = conn.prepareStatement(sql);
+
+            int productId = Integer.parseInt(productID.getText());
 
             pst.setString(1, name);
             pst.setString(2, type);
@@ -387,6 +388,7 @@ public class editproduct extends javax.swing.JPanel {
             price.setText("");
             stocks.setText("");
             producttype.setText("");
+
             generateProductId();
 
             pst.close();
