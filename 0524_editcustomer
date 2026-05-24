@@ -5,8 +5,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import javax.swing.JOptionPane;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
@@ -18,7 +16,7 @@ import java.sql.SQLException;
  *
  * @author hezekiahmagalona
  */
-public class editcustomer extends javax.swing.JPanel {
+public class editproduct extends javax.swing.JPanel {
     private Connection conn;
     private java.awt.Font customFont;
 
@@ -26,38 +24,67 @@ public class editcustomer extends javax.swing.JPanel {
     /**
      * Creates new form customer
      */
+    
     private Connection getConnection() throws Exception {
-    String url = "jdbc:sqlserver://localhost:1433;"
-        + "databaseName=ifcdb;"
-        + "encrypt=true;"
-        + "trustServerCertificate=true";
+        String url = "jdbc:sqlserver://localhost:1433;"
+            + "databaseName=ifcdb;"
+            + "encrypt=true;"
+            + "trustServerCertificate=true";
 
-    String user = "sa";
-    String password = "Anolagam28";
+        String user = "sa";
+        String password = "Anolagam28";
 
-    return DriverManager.getConnection(url, user, password);
-    }
-    
-    
-    public editcustomer() {
+        return DriverManager.getConnection(url, user, password);
+        }
+
+    public editproduct() {
         initComponents();
         loadFonts();
 
-        cID.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
-        name.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
-        add.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
-        cnum.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
-        
+        pID.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        pname.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        pprice.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        pstocks.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        ptype.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+
         try {
             conn = getConnection();
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage());
+            JOptionPane.showMessageDialog(this,
+                    "Database connection failed: " + e.getMessage());
             return;
         }
 
-generateCustomerId();
+        generateProductId();
     }
 
+    
+    private void generateProductId() {
+
+        String sql =
+            "SELECT ISNULL(MAX(product_id), 1999) + 1 AS next_id FROM dbo.Products";
+
+        try {
+            PreparedStatement pst = conn.prepareStatement(sql);
+            java.sql.ResultSet rs = pst.executeQuery();
+
+            if (rs.next()) {
+                productID.setText(
+                        String.valueOf(rs.getInt("next_id"))
+                );
+
+                productID.setEditable(true);
+                productID.setFocusable(true);
+            }
+
+            rs.close();
+            pst.close();
+
+        } catch (java.sql.SQLException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error generating Product ID: " + ex.getMessage());
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -67,64 +94,67 @@ generateCustomerId();
     // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
     private void initComponents() {
 
-        customername = new javax.swing.JTextField();
-        customeraddress = new javax.swing.JTextField();
-        contactnum = new javax.swing.JTextField();
-        customerID = new javax.swing.JTextField();
+        productname = new javax.swing.JTextField();
+        price = new javax.swing.JTextField();
+        producttype = new javax.swing.JTextField();
+        productID = new javax.swing.JTextField();
         clear = new javax.swing.JButton();
         save = new javax.swing.JButton();
         backtotable = new javax.swing.JButton();
         delete = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
+        jlabel7 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        name = new javax.swing.JLabel();
-        add = new javax.swing.JLabel();
-        cnum = new javax.swing.JLabel();
-        cID = new javax.swing.JLabel();
+        pname = new javax.swing.JLabel();
+        pprice = new javax.swing.JLabel();
+        ptype = new javax.swing.JLabel();
+        pID = new javax.swing.JLabel();
+        pstocks = new javax.swing.JLabel();
+        stocks = new javax.swing.JTextField();
+        jLabel5 = new javax.swing.JLabel();
         mainbg = new javax.swing.JLabel();
 
         setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
-        customername.setBackground(new java.awt.Color(255, 255, 255));
-        customername.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
-        customername.setForeground(new java.awt.Color(0, 0, 0));
-        customername.setBorder(null);
-        customername.addActionListener(this::customernameActionPerformed);
-        add(customername, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 290, 370, 50));
+        productname.setBackground(new java.awt.Color(255, 255, 255));
+        productname.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
+        productname.setForeground(new java.awt.Color(0, 0, 0));
+        productname.setBorder(null);
+        productname.addActionListener(this::productnameActionPerformed);
+        add(productname, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 260, 370, 50));
 
-        customeraddress.setBackground(new java.awt.Color(255, 255, 255));
-        customeraddress.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
-        customeraddress.setForeground(new java.awt.Color(0, 0, 0));
-        customeraddress.setBorder(null);
-        add(customeraddress, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 390, 370, 50));
+        price.setBackground(new java.awt.Color(255, 255, 255));
+        price.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
+        price.setForeground(new java.awt.Color(0, 0, 0));
+        price.setBorder(null);
+        add(price, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 350, 380, 50));
 
-        contactnum.setBackground(new java.awt.Color(255, 255, 255));
-        contactnum.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
-        contactnum.setForeground(new java.awt.Color(0, 0, 0));
-        contactnum.setBorder(null);
-        add(contactnum, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 490, 370, 50));
+        producttype.setBackground(new java.awt.Color(255, 255, 255));
+        producttype.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
+        producttype.setForeground(new java.awt.Color(0, 0, 0));
+        producttype.setBorder(null);
+        add(producttype, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 530, 370, 50));
 
-        customerID.setBackground(new java.awt.Color(255, 255, 255));
-        customerID.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
-        customerID.setForeground(new java.awt.Color(0, 0, 0));
-        customerID.setBorder(null);
-        add(customerID, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 190, 370, 50));
+        productID.setBackground(new java.awt.Color(255, 255, 255));
+        productID.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
+        productID.setForeground(new java.awt.Color(0, 0, 0));
+        productID.setBorder(null);
+        add(productID, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 170, 370, 50));
 
         clear.setBackground(new java.awt.Color(255, 255, 255));
         clear.setFont(new java.awt.Font("Kokonor", 0, 18)); // NOI18N
         clear.setForeground(new java.awt.Color(0, 0, 0));
         clear.setText("Clear");
         clear.addActionListener(this::clearActionPerformed);
-        add(clear, new org.netbeans.lib.awtextra.AbsoluteConstraints(740, 630, 120, 40));
+        add(clear, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 650, 120, 40));
 
         save.setBackground(new java.awt.Color(255, 255, 255));
         save.setFont(new java.awt.Font("Kokonor", 0, 18)); // NOI18N
         save.setForeground(new java.awt.Color(0, 0, 0));
         save.setText("Save");
         save.addActionListener(this::saveActionPerformed);
-        add(save, new org.netbeans.lib.awtextra.AbsoluteConstraints(890, 630, 120, 40));
+        add(save, new org.netbeans.lib.awtextra.AbsoluteConstraints(910, 650, 120, 40));
 
         backtotable.setBackground(new java.awt.Color(255, 255, 255));
         backtotable.setFont(new java.awt.Font("Kokonor", 0, 18)); // NOI18N
@@ -132,127 +162,122 @@ generateCustomerId();
         backtotable.setText("Back to Table");
         backtotable.setToolTipText("");
         backtotable.addActionListener(this::backtotableActionPerformed);
-        add(backtotable, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 630, 150, 40));
+        add(backtotable, new org.netbeans.lib.awtextra.AbsoluteConstraints(430, 650, 150, 40));
 
         delete.setBackground(new java.awt.Color(255, 255, 255));
         delete.setFont(new java.awt.Font("Kokonor", 0, 18)); // NOI18N
         delete.setForeground(new java.awt.Color(0, 0, 0));
         delete.setText("Delete");
         delete.addActionListener(this::deleteActionPerformed);
-        add(delete, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 630, 120, 40));
+        add(delete, new org.netbeans.lib.awtextra.AbsoluteConstraints(610, 650, 120, 40));
 
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
-        add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 280, -1, 70));
+        add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 250, -1, 70));
 
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
-        add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 380, -1, 70));
+        add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 340, -1, 70));
 
-        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
-        add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 480, -1, 70));
+        jlabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jlabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
+        add(jlabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 520, -1, 70));
 
         jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
-        add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 180, -1, 70));
+        add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 160, -1, 70));
 
-        name.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
-        name.setForeground(new java.awt.Color(255, 255, 255));
-        name.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        name.setText("Name:");
-        add(name, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 290, 180, 50));
+        pname.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
+        pname.setForeground(new java.awt.Color(255, 255, 255));
+        pname.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        pname.setText("Name:");
+        add(pname, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 260, 180, 50));
 
-        add.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
-        add.setForeground(new java.awt.Color(255, 255, 255));
-        add.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        add.setText("Address:");
-        add(add, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 390, 180, 50));
+        pprice.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
+        pprice.setForeground(new java.awt.Color(255, 255, 255));
+        pprice.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        pprice.setText("Price:");
+        add(pprice, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 350, 180, 50));
 
-        cnum.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
-        cnum.setForeground(new java.awt.Color(255, 255, 255));
-        cnum.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        cnum.setText("Contact Number:");
-        add(cnum, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 490, 240, 50));
+        ptype.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
+        ptype.setForeground(new java.awt.Color(255, 255, 255));
+        ptype.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        ptype.setText("Type:");
+        add(ptype, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 530, 240, 50));
 
-        cID.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
-        cID.setForeground(new java.awt.Color(255, 255, 255));
-        cID.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        cID.setText("Customer ID:");
-        add(cID, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 190, 170, 50));
+        pID.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
+        pID.setForeground(new java.awt.Color(255, 255, 255));
+        pID.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        pID.setText("Product ID:");
+        add(pID, new org.netbeans.lib.awtextra.AbsoluteConstraints(330, 170, 170, 50));
+
+        pstocks.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
+        pstocks.setForeground(new java.awt.Color(255, 255, 255));
+        pstocks.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        pstocks.setText("Stocks:");
+        add(pstocks, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 440, 240, 50));
+
+        stocks.setBackground(new java.awt.Color(255, 255, 255));
+        stocks.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
+        stocks.setForeground(new java.awt.Color(0, 0, 0));
+        stocks.setBorder(null);
+        add(stocks, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 440, 370, 50));
+
+        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
+        add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 430, -1, 70));
 
         mainbg.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/mainbg.png"))); // NOI18N
         add(mainbg, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1300, -1));
     }// </editor-fold>                        
 
-    
-    private void generateCustomerId() {
-
-        String sql = "SELECT ISNULL(MAX(customer_id), 999) + 1 AS next_id FROM dbo.Customers";
-
-    try {
-        PreparedStatement pst = conn.prepareStatement(sql);
-        ResultSet rs = pst.executeQuery();
-
-        if (rs.next()) {
-            customerID.setText(String.valueOf(rs.getInt("next_id")));
-            customerID.setEditable(true);
-            customerID.setFocusable(true);
-        }
-
-        rs.close();
-        pst.close();
-
-    } catch (SQLException ex) {
-        JOptionPane.showMessageDialog(this, "Error generating Customer ID: " + ex.getMessage());
-    }
-}
-    
-    private void customernameActionPerformed(java.awt.event.ActionEvent evt) {                                             
+    private void productnameActionPerformed(java.awt.event.ActionEvent evt) {                                            
         // TODO add your handling code here:
-    }                                            
+    }                                           
 
     private void deleteActionPerformed(java.awt.event.ActionEvent evt) {                                       
-        String idText = customerID.getText().trim();
+        String idText = productID.getText().trim();
 
         if (idText.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Enter customer ID first.");
-            customerID.requestFocus();
+            JOptionPane.showMessageDialog(this, "Enter product ID first.");
+            productID.requestFocus();
             return;
         }
 
         try {
-            int customerId = Integer.parseInt(idText);
+            int productId = Integer.parseInt(idText);
 
             Connection conn = getConnection();
 
-            String selectSql = "SELECT customer_name, customer_address, contact_num FROM dbo.Customers WHERE customer_id = ?";
+            String selectSql = "SELECT product_name, product_type, unit_price, stock FROM dbo.Products WHERE product_id = ?";
             PreparedStatement selectPst = conn.prepareStatement(selectSql);
-            selectPst.setInt(1, customerId);
+            selectPst.setInt(1, productId);
 
             java.sql.ResultSet rs = selectPst.executeQuery();
 
             if (!rs.next()) {
-                JOptionPane.showMessageDialog(this, "Customer ID not found.");
+                JOptionPane.showMessageDialog(this, "Product ID not found.");
                 rs.close();
                 selectPst.close();
                 conn.close();
                 return;
             }
 
-            String currentName = rs.getString("customer_name");
-            String currentAddress = rs.getString("customer_address");
-            String currentContact = rs.getString("contact_num");
+            String currentName = rs.getString("product_name");
+            String currentType = rs.getString("product_type");
+            double currentPrice = rs.getDouble("unit_price");
+            int currentStock = rs.getInt("stock");
 
             rs.close();
             selectPst.close();
 
-            String message = "Are you sure you want to delete this customer record?\n\n"
-                    + "Customer Information:\n"
-                    + "Customer ID: " + customerId + "\n"
-                    + "Name: " + currentName + "\n"
-                    + "Address: " + currentAddress + "\n"
-                    + "Contact Number: " + currentContact;
+            String message = "Are you sure you want to delete this product record?\n\n"
+                    + "Product Information:\n"
+                    + "Product ID: " + productId + "\n"
+                    + "Product Name: " + currentName + "\n"
+                    + "Product Type: " + currentType + "\n"
+                    + "Unit Price: " + currentPrice + "\n"
+                    + "Stock: " + currentStock;
 
             int confirm = JOptionPane.showConfirmDialog(
                     this,
@@ -266,14 +291,14 @@ generateCustomerId();
                 return;
             }
 
-            String deleteSql = "DELETE FROM dbo.Customers WHERE customer_id = ?";
+            String deleteSql = "DELETE FROM dbo.Products WHERE product_id = ?";
             PreparedStatement deletePst = conn.prepareStatement(deleteSql);
-            deletePst.setInt(1, customerId);
+            deletePst.setInt(1, productId);
 
             int rows = deletePst.executeUpdate();
 
             if (rows > 0) {
-                JOptionPane.showMessageDialog(this, "Customer deleted successfully.");
+                JOptionPane.showMessageDialog(this, "Product deleted successfully.");
             } else {
                 JOptionPane.showMessageDialog(this, "Delete failed.");
             }
@@ -282,7 +307,7 @@ generateCustomerId();
             conn.close();
 
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Customer ID must be a number.");
+            JOptionPane.showMessageDialog(this, "Product ID must be a number.");
         } catch (java.sql.SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error deleting record: " + ex.getMessage());
         } catch (Exception ex) {
@@ -291,75 +316,86 @@ generateCustomerId();
     }                                      
 
     private void clearActionPerformed(java.awt.event.ActionEvent evt) {                                      
-        int response = javax.swing.JOptionPane.showConfirmDialog(this,
-        "This will clear all your inputs. Continue?",
-        "Confirm Clear",
-        javax.swing.JOptionPane.YES_NO_OPTION);
+         int response = javax.swing.JOptionPane.showConfirmDialog(this,
+            "This will clear all your inputs. Continue?",
+            "Confirm Clear",
+            javax.swing.JOptionPane.YES_NO_OPTION);
 
-    if (response == javax.swing.JOptionPane.YES_OPTION) {
-        customername.setText("");
-        customeraddress.setText("");
-        contactnum.setText("");
-        generateCustomerId();
+        if (response == javax.swing.JOptionPane.YES_OPTION) {
+            productID.setText("");
+            productname.setText("");
+            price.setText("");
+            stocks.setText("");
+            producttype.setText("");
 
-        javax.swing.JOptionPane.showMessageDialog(this, "Fields cleared successfully.");}
+            javax.swing.JOptionPane.showMessageDialog(this, "Fields cleared successfully.");}
     }                                     
 
     private void saveActionPerformed(java.awt.event.ActionEvent evt) {                                     
-        String name = customername.getText().trim();
-        String address = customeraddress.getText().trim();
-        String contact = contactnum.getText().trim();
+        String name = productname.getText().trim();
+        String type = producttype.getText().trim();
+        String priceText = price.getText().trim();
+        String stockText = stocks.getText().trim();
 
-        if (name.isEmpty() || address.isEmpty() || contact.isEmpty()) {
+        if (name.isEmpty() || type.isEmpty() || priceText.isEmpty() || stockText.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please fill in all fields.");
             return;
         }
 
-        if (!contact.matches("\\d{11}")) {
-            JOptionPane.showMessageDialog(this, "Contact number must be exactly 11 digits.");
-            contactnum.requestFocus();
-            return;
-        }
-
-        String message = "Are you sure you want to save this customer record?\n\n"
-                + "Customer Information:\n"
-                + "Customer ID: " + customerID.getText().trim() + "\n"
-                + "Name: " + name + "\n"
-                + "Address: " + address + "\n"
-                + "Contact Number: " + contact;
-
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
-                message,
-                "Confirm Save",
-                JOptionPane.YES_NO_OPTION
-        );
-
-        if (confirm != JOptionPane.YES_OPTION) {
-            return;
-        }
-
         try {
-            String sql = "INSERT INTO dbo.Customers "
-                    + "(customer_name, customer_address, contact_num) "
-                    + "VALUES (?, ?, ?)";
+            double unitPrice = Double.parseDouble(priceText);
+            int productStock = Integer.parseInt(stockText);
 
+            if (unitPrice < 0 || productStock < 0) {
+                JOptionPane.showMessageDialog(this, "Unit price and stock cannot be negative.");
+                return;
+            }
+
+            String message = "Are you sure you want to save this product record?\n\n"
+                + "Product Information:\n"
+                + "Product Name: " + name + "\n"
+                + "Product Type: " + type + "\n"
+                + "Unit Price: " + priceText + "\n"
+                + "Stock: " + productStock;
+
+            int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    message,
+                    "Confirm Save",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            String sql = "INSERT INTO dbo.Products (product_name, product_type, unit_price, stock) VALUES (?, ?, ?, ?)";
+            Connection conn = getConnection();
             PreparedStatement pst = conn.prepareStatement(sql);
 
+            int productId = Integer.parseInt(productID.getText());
+
             pst.setString(1, name);
-            pst.setString(2, address);
-            pst.setString(3, contact);
+            pst.setString(2, type);
+            pst.setDouble(3, unitPrice);
+            pst.setInt(4, productStock);
 
             pst.executeUpdate();
+
+            JOptionPane.showMessageDialog(this, "Product saved successfully.");
+
+            productname.setText("");
+            price.setText("");
+            stocks.setText("");
+            producttype.setText("");
+
+            generateProductId();
+
             pst.close();
+            conn.close();
 
-            JOptionPane.showMessageDialog(this, "Customer saved successfully.");
-
-            customername.setText("");
-            customeraddress.setText("");
-            contactnum.setText("");
-            generateCustomerId();
-
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Unit price must be a number and stock must be a whole number.");
         } catch (java.sql.SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
         } catch (Exception ex) {
@@ -371,30 +407,33 @@ generateCustomerId();
         javax.swing.JFrame frame =
         (javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
 
-        frame.setContentPane(new customer());
+        frame.setContentPane(new product());
         frame.revalidate();
         frame.repaint();            
     }                                           
 
 
     // Variables declaration - do not modify                     
-    private javax.swing.JLabel add;
     private javax.swing.JButton backtotable;
-    private javax.swing.JLabel cID;
     private javax.swing.JButton clear;
-    private javax.swing.JLabel cnum;
-    private javax.swing.JTextField contactnum;
-    private javax.swing.JTextField customerID;
-    private javax.swing.JTextField customeraddress;
-    private javax.swing.JTextField customername;
     private javax.swing.JButton delete;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jlabel7;
     private javax.swing.JLabel mainbg;
-    private javax.swing.JLabel name;
+    private javax.swing.JLabel pID;
+    private javax.swing.JLabel pname;
+    private javax.swing.JLabel pprice;
+    private javax.swing.JTextField price;
+    private javax.swing.JTextField productID;
+    private javax.swing.JTextField productname;
+    private javax.swing.JTextField producttype;
+    private javax.swing.JLabel pstocks;
+    private javax.swing.JLabel ptype;
     private javax.swing.JButton save;
+    private javax.swing.JTextField stocks;
     // End of variables declaration                   
     
     private void loadFonts() {
@@ -406,5 +445,5 @@ generateCustomerId();
         } catch (FontFormatException | IOException e) {
             customFont = new java.awt.Font("Serif", java.awt.Font.PLAIN, 18);
         }
-    }}
-
+    }
+}
