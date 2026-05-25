@@ -18,6 +18,8 @@ public class editorder extends javax.swing.JPanel {
         ostat.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
         ocID.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
         oaID.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        
+        generateNextOrderID();
     }
 
     @SuppressWarnings("unchecked")
@@ -478,6 +480,35 @@ public class editorder extends javax.swing.JPanel {
     private javax.swing.ButtonGroup progress;
     private javax.swing.JButton save;
     // End of variables declaration                   
+    
+    private void generateNextOrderID() {
+        try {
+            java.sql.Connection conn = IFCDatabase.getConnection();
+
+            String sql = "SELECT MAX(order_id) AS max_id FROM Orders";
+            java.sql.PreparedStatement pst = conn.prepareStatement(sql);
+            java.sql.ResultSet rs = pst.executeQuery();
+
+            int nextID = 3000;
+
+            if (rs.next()) {
+                int maxID = rs.getInt("max_id");
+
+                if (!rs.wasNull()) {
+                    nextID = maxID + 1;
+                }
+            }
+
+            orderID.setText(String.valueOf(nextID));
+
+            rs.close();
+            pst.close();
+            conn.close();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,"Failed to generate Order ID: " + e.getMessage());
+        }
+    }
     
     private void loadFonts() {
         try {
