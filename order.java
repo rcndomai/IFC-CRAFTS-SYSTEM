@@ -40,8 +40,8 @@ public class order extends javax.swing.JPanel {
                 
             @Override
             public boolean isCellEditable(int row, int column) {
-            // Total Amount column NOT editable
-                if (column == 6) {
+            // Order ID & Total Amount column NOT editable
+                if (column == 0 && column == 6) {
                     return false;
                 }
                     return true;
@@ -126,8 +126,8 @@ public class order extends javax.swing.JPanel {
             DefaultTableModel model = new DefaultTableModel() {
                 @Override
                 public boolean isCellEditable(int row, int column) {
-                // Total Amount not editable
-                    if (column == 6) {
+                // Order ID and Total Amount not editable
+                    if (column == 0 && column == 6) {
                         return false;
                     }
                     return true;
@@ -303,7 +303,7 @@ public class order extends javax.swing.JPanel {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        edittable = new javax.swing.JButton();
+        add_del = new javax.swing.JButton();
         searchorderID = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         ordertable = new javax.swing.JTable();
@@ -333,10 +333,11 @@ public class order extends javax.swing.JPanel {
         jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 180, -1, 70));
 
-        edittable.setFont(new java.awt.Font("Kokonor", 0, 18)); // NOI18N
-        edittable.setText("Edit Table");
-        edittable.addActionListener(this::edittableActionPerformed);
-        add(edittable, new org.netbeans.lib.awtextra.AbsoluteConstraints(1060, 100, 120, 40));
+        add_del.setFont(new java.awt.Font("Kokonor", 0, 18)); // NOI18N
+        add_del.setText("Add/Delete");
+        add_del.setActionCommand("Add/Delete");
+        add_del.addActionListener(this::add_delActionPerformed);
+        add(add_del, new org.netbeans.lib.awtextra.AbsoluteConstraints(1060, 100, 120, 40));
 
         searchorderID.setFont(new java.awt.Font("Kokonor", 0, 18)); // NOI18N
         searchorderID.setText("Search Order ID");
@@ -384,13 +385,13 @@ public class order extends javax.swing.JPanel {
         frame.repaint();
     }                                    
 
-    private void edittableActionPerformed(java.awt.event.ActionEvent evt) {                                          
+    private void add_delActionPerformed(java.awt.event.ActionEvent evt) {                                        
         JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
 
         frame.setContentPane(new editorder());
         frame.revalidate();
         frame.repaint(); 
-    }                                         
+    }                                       
  
     private void searchorderIDActionPerformed(java.awt.event.ActionEvent evt) {                                              
         String input = JOptionPane.showInputDialog(this, "Enter Order ID:");
@@ -544,10 +545,11 @@ public class order extends javax.swing.JPanel {
         JOptionPane.showMessageDialog(this, "All records are now displayed.");
     }                                          
 
+
     // Variables declaration - do not modify                     
+    private javax.swing.JButton add_del;
     private javax.swing.JButton back;
     private javax.swing.JLabel bg;
-    private javax.swing.JButton edittable;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
