@@ -247,7 +247,7 @@ public class orderitem extends javax.swing.JPanel {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        edittable = new javax.swing.JButton();
+        add_del = new javax.swing.JButton();
         searchorderitemID = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         orderitemtable = new javax.swing.JTable();
@@ -277,10 +277,10 @@ public class orderitem extends javax.swing.JPanel {
         jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 180, -1, 70));
 
-        edittable.setFont(new java.awt.Font("Kokonor", 0, 18)); // NOI18N
-        edittable.setText("Edit Table");
-        edittable.addActionListener(this::edittableActionPerformed);
-        add(edittable, new org.netbeans.lib.awtextra.AbsoluteConstraints(1060, 100, 120, 40));
+        add_del.setFont(new java.awt.Font("Kokonor", 0, 18)); // NOI18N
+        add_del.setText("Add/Delete");
+        add_del.addActionListener(this::add_delActionPerformed);
+        add(add_del, new org.netbeans.lib.awtextra.AbsoluteConstraints(1060, 100, 120, 40));
 
         searchorderitemID.setFont(new java.awt.Font("Kokonor", 0, 18)); // NOI18N
         searchorderitemID.setText("Search Order ID or Product ID");
@@ -330,14 +330,14 @@ public class orderitem extends javax.swing.JPanel {
         frame.repaint();
     }                                    
 
-    private void edittableActionPerformed(java.awt.event.ActionEvent evt) {                                          
+    private void add_delActionPerformed(java.awt.event.ActionEvent evt) {                                        
         javax.swing.JFrame frame =
         (javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
 
         frame.setContentPane(new editorderitem());
         frame.revalidate();
         frame.repaint(); 
-    }                                         
+    }                                       
 
     private void searchorderitemIDActionPerformed(java.awt.event.ActionEvent evt) {                                                  
         String input = JOptionPane.showInputDialog(this,"Enter Order ID (3000-3999) or Product ID (2000-2999):");
@@ -455,15 +455,21 @@ public class orderitem extends javax.swing.JPanel {
                 
                 String sql =
                     "UPDATE Order_Items SET "
+                    + "order_id=?, "
+                    + "product_id=?, "
                     + "quantity=? "
                     + "WHERE order_id=? "
                     + "AND product_id=?";
 
                 PreparedStatement pst = conn.prepareStatement(sql);
 
-                pst.setInt(1,Integer.parseInt(model.getValueAt(i, 2).toString()));
-                pst.setInt(2,Integer.parseInt(model.getValueAt(i, 0).toString()));
-                pst.setInt(3,Integer.parseInt(model.getValueAt(i, 1).toString()));
+                pst.setInt(1, orderId); // new order_id
+                pst.setInt(2, productId); // new product_id
+                pst.setInt(3, Integer.parseInt(model.getValueAt(i, 2).toString())); // quantity
+
+                // original IDs for WHERE clause
+                pst.setInt(4, Integer.parseInt(originalData[i][0].toString()));
+                pst.setInt(5, Integer.parseInt(originalData[i][1].toString()));
                 pst.executeUpdate();
             }
             
@@ -481,9 +487,9 @@ public class orderitem extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify                     
+    private javax.swing.JButton add_del;
     private javax.swing.JButton back;
     private javax.swing.JLabel bg;
-    private javax.swing.JButton edittable;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
