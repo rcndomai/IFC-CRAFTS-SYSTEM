@@ -91,13 +91,7 @@
                             + e.getMessage());
         }
     }
-
-// ref btn
-    private void refreshbtnActionPerformed(java.awt.event.ActionEvent evt) {                                           
-        loadShipmentTable();
-        JOptionPane.showMessageDialog(this, "All records are now displayed.");
-    }   
-
+  
 // save btn
     private void savebtnActionPerformed(java.awt.event.ActionEvent evt) {                                        
     
