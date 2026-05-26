@@ -240,7 +240,7 @@
                                 model.getValueAt(i, 1)
                                         .toString());
     
-                java.sql.Date shipmentDate =
+                java.sql.Date shipmentdate =
                         java.sql.Date.valueOf(
                                 model.getValueAt(i, 2)
                                         .toString());
@@ -249,11 +249,11 @@
                         model.getValueAt(i, 3)
                                 .toString();
     
-                String courierName =
+                String courier =
                         model.getValueAt(i, 4)
                                 .toString();
     
-                String status =
+                String shipmenttatus =
                         model.getValueAt(i, 5)
                                 .toString();
     
@@ -270,10 +270,10 @@
                         conn.prepareStatement(sql);
     
                 pst.setInt(1, orderId);
-                pst.setDate(2, shipmentDate);
+                pst.setDate(2, shipmentdate);
                 pst.setString(3, deliveryMode);
-                pst.setString(4, courierName);
-                pst.setString(5, status);
+                pst.setString(4, courier);
+                pst.setString(5, shipmentstatus);
                 pst.setInt(6, shipmentId);
     
                 pst.executeUpdate();
