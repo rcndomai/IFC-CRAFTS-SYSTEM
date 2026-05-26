@@ -245,7 +245,7 @@
                                 model.getValueAt(i, 2)
                                         .toString());
     
-                String deliveryMode =
+                String deliverymode =
                         model.getValueAt(i, 3)
                                 .toString();
     
@@ -271,7 +271,7 @@
     
                 pst.setInt(1, orderId);
                 pst.setDate(2, shipmentdate);
-                pst.setString(3, deliveryMode);
+                pst.setString(3, deliverymode);
                 pst.setString(4, courier);
                 pst.setString(5, shipmentstatus);
                 pst.setInt(6, shipmentId);
