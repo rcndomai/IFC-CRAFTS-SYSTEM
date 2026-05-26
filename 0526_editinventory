@@ -1,0 +1,308 @@
+//delete
+private void deleteActionPerformed(java.awt.event.ActionEvent evt) {                                       
+
+    String idText =
+            inventoryID.getText().trim();
+
+    if (idText.isEmpty()) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Enter Inventory ID first.");
+
+        inventoryID.requestFocus();
+        return;
+    }
+
+    try {
+
+        int inventoryId =
+                Integer.parseInt(idText);
+
+        Connection conn =
+                getConnection();
+
+        String selectSql =
+                "SELECT material, stock_quantity, " +
+                "material_cost " +
+                "FROM dbo.Inventory " +
+                "WHERE inventory_id = ?";
+
+        PreparedStatement selectPst =
+                conn.prepareStatement(selectSql);
+
+        selectPst.setInt(1, inventoryId);
+
+        java.sql.ResultSet rs =
+                selectPst.executeQuery();
+
+        if (!rs.next()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Inventory ID not found.");
+
+            rs.close();
+            selectPst.close();
+            conn.close();
+
+            return;
+        }
+
+        String currentMaterial =
+                rs.getString("material");
+
+        int currentStock =
+                rs.getInt("stock_quantity");
+
+        double currentCost =
+                rs.getDouble("material_cost");
+
+        rs.close();
+        selectPst.close();
+
+        String message =
+                "Are you sure you want to delete this inventory record?\n\n"
+                + "Inventory Information:\n"
+                + "Inventory ID: " + inventoryId + "\n"
+                + "Material: " + currentMaterial + "\n"
+                + "Stock Quantity: " + currentStock + "\n"
+                + "Material Cost: " + currentCost;
+
+        int confirm =
+                JOptionPane.showConfirmDialog(
+                        this,
+                        message,
+                        "Confirm Delete",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+        if (confirm != JOptionPane.YES_OPTION) {
+
+            conn.close();
+            return;
+        }
+
+        String deleteSql =
+                "DELETE FROM dbo.Inventory " +
+                "WHERE inventory_id = ?";
+
+        PreparedStatement deletePst =
+                conn.prepareStatement(deleteSql);
+
+        deletePst.setInt(1, inventoryId);
+
+        int rows =
+                deletePst.executeUpdate();
+
+        if (rows > 0) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Inventory deleted successfully.");
+
+        } else {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Delete failed.");
+        }
+
+        deletePst.close();
+        conn.close();
+
+    } catch (NumberFormatException ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Inventory ID must be a number.");
+
+    } catch (java.sql.SQLException ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error deleting record: "
+                        + ex.getMessage());
+
+    } catch (Exception ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error: "
+                        + ex.getMessage());
+    }
+}
+
+//clear
+private void clearActionPerformed(java.awt.event.ActionEvent evt) {                                      
+
+    int response =
+            JOptionPane.showConfirmDialog(
+                    this,
+                    "This will clear all your inputs. Continue?",
+                    "Confirm Clear",
+                    JOptionPane.YES_NO_OPTION);
+
+    if (response == JOptionPane.YES_OPTION) {
+
+        inventoryID.setText("");
+        material.setText("");
+        stoqua.setText("");
+        matcost.setText("");
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Fields cleared successfully.");
+    }
+}
+
+//save
+private void saveActionPerformed(java.awt.event.ActionEvent evt) {                                     
+
+    String materialName =
+            material.getText().trim();
+
+    String stockText =
+            stoqua.getText().trim();
+
+    String costText =
+            matcost.getText().trim();
+
+    if (materialName.isEmpty()
+            || stockText.isEmpty()
+            || costText.isEmpty()) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Please fill in all fields.");
+
+        return;
+    }
+
+    try {
+
+        int stockQuantity =
+                Integer.parseInt(stockText);
+
+        double materialCost =
+                Double.parseDouble(costText);
+
+        if (stockQuantity < 0
+                || materialCost < 0) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Stock quantity and cost cannot be negative.");
+
+            return;
+        }
+
+        String message =
+                "Are you sure you want to save this inventory record?\n\n"
+                + "Inventory Information:\n"
+                + "Material: " + materialName + "\n"
+                + "Stock Quantity: " + stockQuantity + "\n"
+                + "Material Cost: " + materialCost;
+
+        int confirm =
+                JOptionPane.showConfirmDialog(
+                        this,
+                        message,
+                        "Confirm Save",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+        if (confirm != JOptionPane.YES_OPTION) {
+
+            return;
+        }
+
+        String sql =
+                "INSERT INTO dbo.Inventory " +
+                "(material, stock_quantity, material_cost) " +
+                "VALUES (?, ?, ?)";
+
+        Connection conn =
+                getConnection();
+
+        PreparedStatement pst =
+                conn.prepareStatement(sql);
+
+        pst.setString(1, materialName);
+        pst.setInt(2, stockQuantity);
+        pst.setDouble(3, materialCost);
+
+        pst.executeUpdate();
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Inventory saved successfully.");
+
+        material.setText("");
+        stoqua.setText("");
+        matcost.setText("");
+
+        generateInventoryId();
+
+        pst.close();
+        conn.close();
+
+    } catch (NumberFormatException ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Stock quantity must be a whole number and material cost must be a number.");
+
+    } catch (java.sql.SQLException ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error: "
+                        + ex.getMessage());
+
+    } catch (Exception ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error: "
+                        + ex.getMessage());
+    }
+}
+
+//auto-gen id
+private void generateInventoryId() {
+
+    String sql =
+        "SELECT ISNULL(MAX(inventory_id), 5999) + 1 AS next_id " +
+        "FROM dbo.Inventory";
+
+    try {
+
+        PreparedStatement pst =
+                conn.prepareStatement(sql);
+
+        java.sql.ResultSet rs =
+                pst.executeQuery();
+
+        if (rs.next()) {
+
+            inventoryID.setText(
+                    String.valueOf(
+                            rs.getInt("next_id"))
+            );
+
+            inventoryID.setEditable(true);
+            inventoryID.setFocusable(true);
+        }
+
+        rs.close();
+        pst.close();
+
+    } catch (java.sql.SQLException ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error generating Inventory ID: "
+                        + ex.getMessage());
+    }
+}
