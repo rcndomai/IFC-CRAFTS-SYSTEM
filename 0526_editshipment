@@ -1,0 +1,342 @@
+//delete
+private void deleteActionPerformed(java.awt.event.ActionEvent evt) {                                       
+
+    String idText =
+            shipmentID.getText().trim();
+
+    if (idText.isEmpty()) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Enter Shipment ID first.");
+
+        shipmentID.requestFocus();
+        return;
+    }
+
+    try {
+
+        int shipmentId =
+                Integer.parseInt(idText);
+
+        Connection conn =
+                getConnection();
+
+        String selectSql =
+                "SELECT order_id, shipment_date, " +
+                "delivery_mode, courier, shipment_status " +
+                "FROM dbo.Shipments " +
+                "WHERE shipment_id = ?";
+
+        PreparedStatement selectPst =
+                conn.prepareStatement(selectSql);
+
+        selectPst.setInt(1, shipmentId);
+
+        java.sql.ResultSet rs =
+                selectPst.executeQuery();
+
+        if (!rs.next()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Shipment ID not found.");
+
+            rs.close();
+            selectPst.close();
+            conn.close();
+
+            return;
+        }
+
+        int currentOrderId =
+                rs.getInt("order_id");
+
+        java.sql.Date currentDate =
+                rs.getDate("shipment_date");
+
+        String currentMode =
+                rs.getString("delivery_mode");
+
+        String currentCourier =
+                rs.getString("courier");
+
+        String currentStatus =
+                rs.getString("shipment_status");
+
+        rs.close();
+        selectPst.close();
+
+        String message =
+                "Are you sure you want to delete this shipment record?\n\n"
+                + "Shipment Information:\n"
+                + "Shipment ID: " + shipmentId + "\n"
+                + "Order ID: " + currentOrderId + "\n"
+                + "Shipment Date: " + currentDate + "\n"
+                + "Delivery Mode: " + currentMode + "\n"
+                + "Courier: " + currentCourier + "\n"
+                + "Status: " + currentStatus;
+
+        int confirm =
+                JOptionPane.showConfirmDialog(
+                        this,
+                        message,
+                        "Confirm Delete",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+        if (confirm != JOptionPane.YES_OPTION) {
+
+            conn.close();
+            return;
+        }
+
+        String deleteSql =
+                "DELETE FROM dbo.Shipments " +
+                "WHERE shipment_id = ?";
+
+        PreparedStatement deletePst =
+                conn.prepareStatement(deleteSql);
+
+        deletePst.setInt(1, shipmentId);
+
+        int rows =
+                deletePst.executeUpdate();
+
+        if (rows > 0) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Shipment deleted successfully.");
+
+        } else {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Delete failed.");
+        }
+
+        deletePst.close();
+        conn.close();
+
+    } catch (NumberFormatException ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Shipment ID must be a number.");
+
+    } catch (java.sql.SQLException ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error deleting record: "
+                        + ex.getMessage());
+
+    } catch (Exception ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error: "
+                        + ex.getMessage());
+    }
+}
+
+//clear
+private void clearActionPerformed(java.awt.event.ActionEvent evt) {                                      
+
+    int response =
+            JOptionPane.showConfirmDialog(
+                    this,
+                    "This will clear all your inputs. Continue?",
+                    "Confirm Clear",
+                    JOptionPane.YES_NO_OPTION);
+
+    if (response == JOptionPane.YES_OPTION) {
+
+        shipmentID.setText("");
+        orderID.setText("");
+        shipmentdate.setDate(null);
+        deliverymode.clearSelection();
+        courier.setText("");
+        shipmentstatus.setSelectedIndex(-1);
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Fields cleared successfully.");
+    }
+}
+//save
+private void saveActionPerformed(java.awt.event.ActionEvent evt) {                                     
+
+    String orderIDText =
+            orderID.getText().trim();
+
+    java.util.Date utilDate =
+            shipmentdate.getDate();
+
+    String courier =
+            courier.getText().trim();
+
+    String shipmentstatus =
+            (shipmentstatus.getSelectedIndex() == -1)
+            ? null
+            : shipmentstatus.getSelectedItem()
+                    .toString();
+
+    String deliverymode = null;
+
+    java.util.Enumeration<javax.swing.AbstractButton>
+            buttons =
+            deliverymode.getElements();
+
+    while (buttons.hasMoreElements()) {
+
+        javax.swing.AbstractButton button =
+                buttons.nextElement();
+
+        if (button.isSelected()) {
+
+            deliverymode =
+                    button.getText();
+
+            break;
+        }
+    }
+
+    if (orderIdText.isEmpty()
+            || utilDate == null
+            || deliverymode == null
+            || shipmentstatus == null) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Please fill in all required fields.");
+
+        return;
+    }
+
+    try {
+
+        int orderID =
+                Integer.parseInt(orderIdText);
+
+        java.sql.Date sqlDate =
+                new java.sql.Date(
+                        utilDate.getTime());
+
+        String message =
+                "Are you sure you want to save this shipment record?\n\n"
+                + "Shipment Information:\n"
+                + "Order ID: " + orderID + "\n"
+                + "Shipment Date: " + shipmentdate + "\n"
+                + "Delivery Mode: " + deliverymode + "\n"
+                + "Courier: " + courier + "\n"
+                + "Status: " + shipmentstatus;
+
+        int confirm =
+                JOptionPane.showConfirmDialog(
+                        this,
+                        message,
+                        "Confirm Save",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+        if (confirm != JOptionPane.YES_OPTION) {
+
+            return;
+        }
+
+        String sql =
+                "INSERT INTO dbo.Shipments " +
+                "(order_id, shipment_date, " +
+                "delivery_mode, courier, shipment_status) " +
+                "VALUES (?, ?, ?, ?, ?)";
+
+        Connection conn =
+                getConnection();
+
+        PreparedStatement pst =
+                conn.prepareStatement(sql);
+
+        pst.setInt(1, orderID);
+        pst.setDate(2, shipmentdate);
+        pst.setString(3, deliverymode);
+        pst.setString(4, courier);
+        pst.setString(5, shipmentstatus);
+
+        pst.executeUpdate();
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Shipment saved successfully.");
+
+        orderID.setText("");
+        shipmentdate.setDate(null);
+        deliverymode.clearSelection();
+        courier.setText("");
+        shipmentstatus.setSelectedIndex(-1);
+
+        generateShipmentId();
+
+        pst.close();
+        conn.close();
+
+    } catch (NumberFormatException ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Order ID must be a whole number.");
+
+    } catch (java.sql.SQLException ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error: "
+                        + ex.getMessage());
+
+    } catch (Exception ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error: "
+                        + ex.getMessage());
+    }
+}
+
+//auto-gen id
+private void generateShipmentId() {
+
+    String sql =
+        "SELECT ISNULL(MAX(shipment_id), 4999) + 1 AS next_id " +
+        "FROM dbo.Shipments";
+
+    try {
+
+        PreparedStatement pst =
+                conn.prepareStatement(sql);
+
+        java.sql.ResultSet rs =
+                pst.executeQuery();
+
+        if (rs.next()) {
+
+            shipmentID.setText(
+                    String.valueOf(
+                            rs.getInt("next_id"))
+            );
+
+            shipmentID.setEditable(true);
+            shipmentID.setFocusable(true);
+        }
+
+        rs.close();
+        pst.close();
+
+    } catch (java.sql.SQLException ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error generating Shipment ID: "
+                        + ex.getMessage());
+    }
+}
