@@ -1,0 +1,296 @@
+    //load table
+    private void loadShipmentTable() {
+    
+        String sql =
+                "SELECT shipment_id, order_id, shipment_date, " +
+                "delivery_mode, courier, shipment_status " +
+                "FROM dbo.Shipments";
+    
+        try {
+    
+            PreparedStatement pst = conn.prepareStatement(sql);
+            ResultSet rs = pst.executeQuery();
+    
+            DefaultTableModel model =
+                    new DefaultTableModel() {
+    
+                @Override
+                public boolean isCellEditable(
+                        int row, int column) {
+    
+                    return column != 0;
+                }
+            };
+    
+            model.setColumnIdentifiers(new String[]{
+                "Shipment ID",
+                "Order ID",
+                "Shipment Date",
+                "Delivery Mode",
+                "Courier",
+                "Status"
+            });
+    
+            java.util.List<String> idList =
+                    new java.util.ArrayList<>();
+    
+            java.util.List<Object[]> dataList =
+                    new java.util.ArrayList<>();
+    
+            while (rs.next()) {
+    
+                String id =
+                        String.valueOf(
+                                rs.getInt("shipment_id"));
+    
+                Object[] row = new Object[]{
+                    id,
+                    rs.getInt("order_id"),
+                    rs.getDate("shipment_date"),
+                    rs.getString("delivery_mode"),
+                    rs.getString("courier"),
+                    rs.getString("shipment_status")
+                };
+    
+                model.addRow(row);
+                idList.add(id);
+                dataList.add(row);
+            }
+    
+            originalIds =
+                    idList.toArray(new String[0]);
+    
+            originalData =
+                    dataList.toArray(new Object[0][]);
+    
+            shipmenttable.setModel(model);
+    
+            String[] statuses = {
+                "Pending",
+                "Shipped",
+                "Delivered",
+                "Cancelled"
+            };
+    
+            JComboBox<String> comboBox =
+                    new JComboBox<>(statuses);
+    
+            shipmenttable.getColumnModel()
+                    .getColumn(5)
+                    .setCellEditor(
+                            new javax.swing.DefaultCellEditor(comboBox));
+    
+            rs.close();
+            pst.close();
+    
+        } catch (Exception e) {
+    
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error loading shipments: "
+                            + e.getMessage());
+        }
+    }
+
+// ref btn
+    private void refreshbtnActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        loadShipmentTable();
+        JOptionPane.showMessageDialog(this, "All records are now displayed.");
+    }   
+
+// save btn
+    private void savebtnActionPerformed(java.awt.event.ActionEvent evt) {                                        
+    
+        if (shipmenttable.isEditing()) {
+    
+            shipmenttable.getCellEditor()
+                    .stopCellEditing();
+        }
+    
+        DefaultTableModel model =
+                (DefaultTableModel)
+                        shipmenttable.getModel();
+    
+        StringBuilder preview =
+                new StringBuilder();
+    
+        boolean hasChanges = false;
+    
+        try {
+    
+            for (int i = 0;
+                 i < model.getRowCount();
+                 i++) {
+    
+                boolean rowChanged = false;
+    
+                for (int j = 0;
+                     j < model.getColumnCount();
+                     j++) {
+    
+                    Object newVal =
+                            model.getValueAt(i, j);
+    
+                    Object oldVal =
+                            originalData[i][j];
+    
+                    if (newVal == null &&
+                            oldVal != null ||
+    
+                            newVal != null &&
+                            !newVal.toString()
+                                    .equals(
+                                            oldVal.toString())) {
+    
+                        rowChanged = true;
+                        break;
+                    }
+                }
+    
+                if (rowChanged) {
+    
+                    hasChanges = true;
+    
+                    preview.append("Shipment ID: ")
+                            .append(model.getValueAt(i, 0))
+                            .append("\n")
+    
+                            .append("Order ID: ")
+                            .append(model.getValueAt(i, 1))
+                            .append("\n")
+    
+                            .append("Shipment Date: ")
+                            .append(model.getValueAt(i, 2))
+                            .append("\n")
+    
+                            .append("Delivery Mode: ")
+                            .append(model.getValueAt(i, 3))
+                            .append("\n")
+    
+                            .append("Courier: ")
+                            .append(model.getValueAt(i, 4))
+                            .append("\n")
+    
+                            .append("Status: ")
+                            .append(model.getValueAt(i, 5))
+                            .append("\n\n");
+                }
+            }
+    
+            if (!hasChanges) {
+    
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No changes detected.");
+    
+                return;
+            }
+    
+            int confirm =
+                    JOptionPane.showConfirmDialog(
+                            this,
+                            "SAVE THESE CHANGES ONLY:\n\n"
+                                    + preview,
+                            "Confirm Save",
+                            JOptionPane.YES_NO_OPTION);
+    
+            if (confirm !=
+                    JOptionPane.YES_OPTION) {
+    
+                return;
+            }
+    
+            for (int i = 0;
+                 i < model.getRowCount();
+                 i++) {
+    
+                boolean rowChanged = false;
+    
+                for (int j = 0;
+                     j < model.getColumnCount();
+                     j++) {
+    
+                    Object newVal =
+                            model.getValueAt(i, j);
+    
+                    Object oldVal =
+                            originalData[i][j];
+    
+                    if (newVal == null &&
+                            oldVal != null ||
+    
+                            newVal != null &&
+                            !newVal.toString()
+                                    .equals(
+                                            oldVal.toString())) {
+    
+                        rowChanged = true;
+                        break;
+                    }
+                }
+    
+                if (!rowChanged) continue;
+    
+                int shipmentId =
+                        Integer.parseInt(
+                                originalIds[i]);
+    
+                int orderId =
+                        Integer.parseInt(
+                                model.getValueAt(i, 1)
+                                        .toString());
+    
+                java.sql.Date shipmentDate =
+                        java.sql.Date.valueOf(
+                                model.getValueAt(i, 2)
+                                        .toString());
+    
+                String deliveryMode =
+                        model.getValueAt(i, 3)
+                                .toString();
+    
+                String courierName =
+                        model.getValueAt(i, 4)
+                                .toString();
+    
+                String status =
+                        model.getValueAt(i, 5)
+                                .toString();
+    
+                String sql =
+                        "UPDATE dbo.Shipments SET " +
+                        "order_id=?, " +
+                        "shipment_date=?, " +
+                        "delivery_mode=?, " +
+                        "courier=?, " +
+                        "shipment_status=? " +
+                        "WHERE shipment_id=?";
+    
+                PreparedStatement pst =
+                        conn.prepareStatement(sql);
+    
+                pst.setInt(1, orderId);
+                pst.setDate(2, shipmentDate);
+                pst.setString(3, deliveryMode);
+                pst.setString(4, courierName);
+                pst.setString(5, status);
+                pst.setInt(6, shipmentId);
+    
+                pst.executeUpdate();
+                pst.close();
+            }
+    
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Changes saved successfully!");
+    
+        } catch (Exception e) {
+    
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error saving changes: "
+                            + e.getMessage());
+        }
+
+    loadShipmentTable();
+}
