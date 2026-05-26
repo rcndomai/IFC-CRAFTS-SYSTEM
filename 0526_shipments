@@ -288,3 +288,42 @@
 
     loadShipmentTable();
 }
+
+//auto-generated dhipment id
+private void generateShipmentId() {
+
+    String sql =
+        "SELECT ISNULL(MAX(shipment_id), 4999) + 1 AS next_id " +
+        "FROM dbo.Shipments";
+
+    try {
+
+        PreparedStatement pst =
+                conn.prepareStatement(sql);
+
+        java.sql.ResultSet rs =
+                pst.executeQuery();
+
+        if (rs.next()) {
+
+            shipmentID.setText(
+                    String.valueOf(
+                            rs.getInt("next_id"))
+            );
+
+            shipmentID.setEditable(true);
+            shipmentID.setFocusable(true);
+        }
+
+        rs.close();
+        pst.close();
+
+    } catch (java.sql.SQLException ex) {
+
+        JOptionPane.showMessageDialog(
+                this,
+                "Error generating Shipment ID: "
+                        + ex.getMessage());
+    }
+}
+
