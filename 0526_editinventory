@@ -1,308 +1,660 @@
-//delete
-private void deleteActionPerformed(java.awt.event.ActionEvent evt) {                                       
+import java.awt.FontFormatException;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import javax.swing.JOptionPane;
 
-    String idText =
-            inventoryID.getText().trim();
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
+ */
 
-    if (idText.isEmpty()) {
+/**
+ *
+ * @author hezekiahmagalona
+ */
+public class editinventory extends javax.swing.JPanel {
 
-        JOptionPane.showMessageDialog(
-                this,
-                "Enter Inventory ID first.");
+    private Connection conn;
+    private java.awt.Font customFont;
 
-        inventoryID.requestFocus();
-        return;
+    /**
+     * Creates new form editinventory
+     */
+    private Connection getConnection() throws Exception {
+
+        String url = "jdbc:sqlserver://localhost:1433;"
+                + "databaseName=ifcdb;"
+                + "encrypt=true;"
+                + "trustServerCertificate=true";
+
+        String user = "sa";
+        String password = "Anolagam28";
+
+        return DriverManager.getConnection(url, user, password);
     }
 
-    try {
+    public editinventory() {
 
-        int inventoryId =
-                Integer.parseInt(idText);
+        initComponents();
+        loadFonts();
 
-        Connection conn =
-                getConnection();
+        iID.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        mat.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        sq.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        mc.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
 
-        String selectSql =
-                "SELECT material, stock_quantity, " +
-                "material_cost " +
-                "FROM dbo.Inventory " +
-                "WHERE inventory_id = ?";
+        try {
 
-        PreparedStatement selectPst =
-                conn.prepareStatement(selectSql);
+            conn = getConnection();
 
-        selectPst.setInt(1, inventoryId);
-
-        java.sql.ResultSet rs =
-                selectPst.executeQuery();
-
-        if (!rs.next()) {
+        } catch (Exception e) {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Inventory ID not found.");
+                    "Database connection failed: "
+                    + e.getMessage());
+
+            return;
+        }
+
+        generateInventoryId();
+    }
+
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">
+    private void initComponents() {
+
+        material = new javax.swing.JTextField();
+        stoqua = new javax.swing.JTextField();
+        inventoryID = new javax.swing.JTextField();
+        matcost = new javax.swing.JTextField();
+
+        clear = new javax.swing.JButton();
+        update = new javax.swing.JButton();
+        save = new javax.swing.JButton();
+        backtotable = new javax.swing.JButton();
+        delete = new javax.swing.JButton();
+
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+
+        mat = new javax.swing.JLabel();
+        sq = new javax.swing.JLabel();
+        mc = new javax.swing.JLabel();
+        iID = new javax.swing.JLabel();
+
+        mainbg = new javax.swing.JLabel();
+
+        setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        material.setBackground(new java.awt.Color(255, 255, 255));
+        material.setFont(new java.awt.Font("Baskerville", 0, 24));
+        material.setForeground(new java.awt.Color(0, 0, 0));
+        material.setBorder(null);
+        material.addActionListener(this::materialActionPerformed);
+        add(material, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 300, 370, 50));
+
+        stoqua.setBackground(new java.awt.Color(255, 255, 255));
+        stoqua.setFont(new java.awt.Font("Baskerville", 0, 24));
+        stoqua.setForeground(new java.awt.Color(0, 0, 0));
+        stoqua.setBorder(null);
+        add(stoqua, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 400, 370, 50));
+
+        inventoryID.setBackground(new java.awt.Color(255, 255, 255));
+        inventoryID.setFont(new java.awt.Font("Baskerville", 0, 24));
+        inventoryID.setForeground(new java.awt.Color(0, 0, 0));
+        inventoryID.setBorder(null);
+        add(inventoryID, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 200, 370, 50));
+
+        matcost.setBackground(new java.awt.Color(255, 255, 255));
+        matcost.setFont(new java.awt.Font("Baskerville", 0, 24));
+        matcost.setForeground(new java.awt.Color(0, 0, 0));
+        matcost.setBorder(null);
+        add(matcost, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 500, 370, 50));
+
+        clear.setBackground(new java.awt.Color(255, 255, 255));
+        clear.setFont(new java.awt.Font("Kokonor", 0, 18));
+        clear.setForeground(new java.awt.Color(0, 0, 0));
+        clear.setText("Clear");
+        clear.addActionListener(this::clearActionPerformed);
+        add(clear, new org.netbeans.lib.awtextra.AbsoluteConstraints(640, 620, 120, 40));
+
+        update.setBackground(new java.awt.Color(255, 255, 255));
+        update.setFont(new java.awt.Font("Kokonor", 0, 18));
+        update.setForeground(new java.awt.Color(0, 0, 0));
+        update.setText("Update");
+        update.addActionListener(this::updateActionPerformed);
+        add(update, new org.netbeans.lib.awtextra.AbsoluteConstraints(790, 620, 120, 40));
+
+        save.setBackground(new java.awt.Color(255, 255, 255));
+        save.setFont(new java.awt.Font("Kokonor", 0, 18));
+        save.setForeground(new java.awt.Color(0, 0, 0));
+        save.setText("Save");
+        save.addActionListener(this::saveActionPerformed);
+        add(save, new org.netbeans.lib.awtextra.AbsoluteConstraints(940, 620, 120, 40));
+
+        backtotable.setBackground(new java.awt.Color(255, 255, 255));
+        backtotable.setFont(new java.awt.Font("Kokonor", 0, 18));
+        backtotable.setForeground(new java.awt.Color(0, 0, 0));
+        backtotable.setText("Back to Table");
+        backtotable.addActionListener(this::backtotableActionPerformed);
+        add(backtotable, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 620, 150, 40));
+
+        delete.setBackground(new java.awt.Color(255, 255, 255));
+        delete.setFont(new java.awt.Font("Kokonor", 0, 18));
+        delete.setForeground(new java.awt.Color(0, 0, 0));
+        delete.setText("Delete");
+        delete.addActionListener(this::deleteActionPerformed);
+        add(delete, new org.netbeans.lib.awtextra.AbsoluteConstraints(490, 620, 120, 40));
+
+        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png")));
+        add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 290, -1, 70));
+
+        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png")));
+        add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 390, -1, 70));
+
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png")));
+        add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 490, -1, 70));
+
+        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png")));
+        add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 190, -1, 70));
+
+        mat.setFont(new java.awt.Font("Big Caslon", 0, 24));
+        mat.setForeground(new java.awt.Color(255, 255, 255));
+        mat.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        mat.setText("Material:");
+        add(mat, new org.netbeans.lib.awtextra.AbsoluteConstraints(320, 300, 180, 50));
+
+        sq.setFont(new java.awt.Font("Big Caslon", 0, 24));
+        sq.setForeground(new java.awt.Color(255, 255, 255));
+        sq.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        sq.setText("Stock Quantity:");
+        add(sq, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 400, 240, 50));
+
+        mc.setFont(new java.awt.Font("Big Caslon", 0, 24));
+        mc.setForeground(new java.awt.Color(255, 255, 255));
+        mc.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        mc.setText("Material Cost:");
+        add(mc, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 500, 240, 50));
+
+        iID.setFont(new java.awt.Font("Big Caslon", 0, 24));
+        iID.setForeground(new java.awt.Color(255, 255, 255));
+        iID.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        iID.setText("Inventory ID:");
+        add(iID, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 200, 240, 50));
+
+        mainbg.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/mainbg.png")));
+        add(mainbg, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1300, -1));
+    }// </editor-fold>
+
+    private void materialActionPerformed(java.awt.event.ActionEvent evt) {
+
+    }
+
+    private void deleteActionPerformed(java.awt.event.ActionEvent evt) {
+
+        String idText =
+                inventoryID.getText().trim();
+
+        if (idText.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Enter Inventory ID first.");
+
+            inventoryID.requestFocus();
+            return;
+        }
+
+        try {
+
+            int inventoryId =
+                    Integer.parseInt(idText);
+
+            Connection conn =
+                    getConnection();
+
+            String selectSql =
+                    "SELECT material, stock_quantity, "
+                    + "material_cost "
+                    + "FROM dbo.Inventory "
+                    + "WHERE inventory_id = ?";
+
+            PreparedStatement selectPst =
+                    conn.prepareStatement(selectSql);
+
+            selectPst.setInt(1, inventoryId);
+
+            java.sql.ResultSet rs =
+                    selectPst.executeQuery();
+
+            if (!rs.next()) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Inventory ID not found.");
+
+                rs.close();
+                selectPst.close();
+                conn.close();
+
+                return;
+            }
+
+            String currentMaterial =
+                    rs.getString("material");
+
+            int currentStock =
+                    rs.getInt("stock_quantity");
+
+            double currentCost =
+                    rs.getDouble("material_cost");
 
             rs.close();
             selectPst.close();
+
+            String message =
+                    "Are you sure you want to delete this inventory record?\n\n"
+                    + "Inventory Information:\n"
+                    + "Inventory ID: " + inventoryId + "\n"
+                    + "Material: " + currentMaterial + "\n"
+                    + "Stock Quantity: " + currentStock + "\n"
+                    + "Material Cost: " + currentCost;
+
+            int confirm =
+                    JOptionPane.showConfirmDialog(
+                            this,
+                            message,
+                            "Confirm Delete",
+                            JOptionPane.YES_NO_OPTION
+                    );
+
+            if (confirm != JOptionPane.YES_OPTION) {
+
+                conn.close();
+                return;
+            }
+
+            String deleteSql =
+                    "DELETE FROM dbo.Inventory "
+                    + "WHERE inventory_id = ?";
+
+            PreparedStatement deletePst =
+                    conn.prepareStatement(deleteSql);
+
+            deletePst.setInt(1, inventoryId);
+
+            int rows =
+                    deletePst.executeUpdate();
+
+            if (rows > 0) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Inventory deleted successfully.");
+
+            } else {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Delete failed.");
+            }
+
+            deletePst.close();
             conn.close();
 
+        } catch (NumberFormatException ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Inventory ID must be a number.");
+
+        } catch (java.sql.SQLException ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error deleting record: "
+                    + ex.getMessage());
+
+        } catch (Exception ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error: "
+                    + ex.getMessage());
+        }
+    }
+
+    private void clearActionPerformed(java.awt.event.ActionEvent evt) {
+
+        int response =
+                JOptionPane.showConfirmDialog(
+                        this,
+                        "This will clear all your inputs. Continue?",
+                        "Confirm Clear",
+                        JOptionPane.YES_NO_OPTION);
+
+        if (response == JOptionPane.YES_OPTION) {
+
+            inventoryID.setText("");
+            material.setText("");
+            stoqua.setText("");
+            matcost.setText("");
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Fields cleared successfully.");
+
+            generateInventoryId();
+        }
+    }
+
+    private void updateActionPerformed(java.awt.event.ActionEvent evt) {
+
+        String inventoryIdText =
+                inventoryID.getText().trim();
+
+        String newMaterial =
+                material.getText().trim();
+
+        String stockText =
+                stoqua.getText().trim();
+
+        String costText =
+                matcost.getText().trim();
+
+        if (inventoryIdText.isEmpty()
+                || newMaterial.isEmpty()
+                || stockText.isEmpty()
+                || costText.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Please fill in all fields.");
+
             return;
         }
 
-        String currentMaterial =
-                rs.getString("material");
+        try {
 
-        int currentStock =
-                rs.getInt("stock_quantity");
+            int inventoryId =
+                    Integer.parseInt(inventoryIdText);
 
-        double currentCost =
-                rs.getDouble("material_cost");
+            int stockQty =
+                    Integer.parseInt(stockText);
 
-        rs.close();
-        selectPst.close();
+            double materialCost =
+                    Double.parseDouble(costText);
 
-        String message =
-                "Are you sure you want to delete this inventory record?\n\n"
-                + "Inventory Information:\n"
-                + "Inventory ID: " + inventoryId + "\n"
-                + "Material: " + currentMaterial + "\n"
-                + "Stock Quantity: " + currentStock + "\n"
-                + "Material Cost: " + currentCost;
+            if (stockQty < 0
+                    || materialCost < 0) {
 
-        int confirm =
-                JOptionPane.showConfirmDialog(
+                JOptionPane.showMessageDialog(
                         this,
-                        message,
-                        "Confirm Delete",
-                        JOptionPane.YES_NO_OPTION
-                );
+                        "Stock quantity and material cost cannot be negative.");
 
-        if (confirm != JOptionPane.YES_OPTION) {
+                return;
+            }
 
+            Connection conn =
+                    getConnection();
+
+            String updateSql =
+                    "UPDATE dbo.Inventory "
+                    + "SET material = ?, "
+                    + "stock_quantity = ?, "
+                    + "material_cost = ? "
+                    + "WHERE inventory_id = ?";
+
+            PreparedStatement pst =
+                    conn.prepareStatement(updateSql);
+
+            pst.setString(1, newMaterial);
+            pst.setInt(2, stockQty);
+            pst.setDouble(3, materialCost);
+            pst.setInt(4, inventoryId);
+
+            int rows =
+                    pst.executeUpdate();
+
+            if (rows > 0) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Inventory updated successfully.");
+
+            } else {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Update failed.");
+            }
+
+            pst.close();
             conn.close();
-            return;
+
+        } catch (NumberFormatException ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Inventory ID and stock quantity must be whole numbers.\n"
+                    + "Material cost must be a number.");
+
+        } catch (Exception ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error: "
+                    + ex.getMessage());
         }
+    }
 
-        String deleteSql =
-                "DELETE FROM dbo.Inventory " +
-                "WHERE inventory_id = ?";
+    private void saveActionPerformed(java.awt.event.ActionEvent evt) {
 
-        PreparedStatement deletePst =
-                conn.prepareStatement(deleteSql);
+        String materialName =
+                material.getText().trim();
 
-        deletePst.setInt(1, inventoryId);
+        String stockText =
+                stoqua.getText().trim();
 
-        int rows =
-                deletePst.executeUpdate();
+        String costText =
+                matcost.getText().trim();
 
-        if (rows > 0) {
+        if (materialName.isEmpty()
+                || stockText.isEmpty()
+                || costText.isEmpty()) {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Inventory deleted successfully.");
-
-        } else {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Delete failed.");
-        }
-
-        deletePst.close();
-        conn.close();
-
-    } catch (NumberFormatException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Inventory ID must be a number.");
-
-    } catch (java.sql.SQLException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error deleting record: "
-                        + ex.getMessage());
-
-    } catch (Exception ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error: "
-                        + ex.getMessage());
-    }
-}
-
-//clear
-private void clearActionPerformed(java.awt.event.ActionEvent evt) {                                      
-
-    int response =
-            JOptionPane.showConfirmDialog(
-                    this,
-                    "This will clear all your inputs. Continue?",
-                    "Confirm Clear",
-                    JOptionPane.YES_NO_OPTION);
-
-    if (response == JOptionPane.YES_OPTION) {
-
-        inventoryID.setText("");
-        material.setText("");
-        stoqua.setText("");
-        matcost.setText("");
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Fields cleared successfully.");
-    }
-}
-
-//save
-private void saveActionPerformed(java.awt.event.ActionEvent evt) {                                     
-
-    String materialName =
-            material.getText().trim();
-
-    String stockText =
-            stoqua.getText().trim();
-
-    String costText =
-            matcost.getText().trim();
-
-    if (materialName.isEmpty()
-            || stockText.isEmpty()
-            || costText.isEmpty()) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Please fill in all fields.");
-
-        return;
-    }
-
-    try {
-
-        int stockQuantity =
-                Integer.parseInt(stockText);
-
-        double materialCost =
-                Double.parseDouble(costText);
-
-        if (stockQuantity < 0
-                || materialCost < 0) {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Stock quantity and cost cannot be negative.");
+                    "Please fill in all fields.");
 
             return;
         }
 
-        String message =
-                "Are you sure you want to save this inventory record?\n\n"
-                + "Inventory Information:\n"
-                + "Material: " + materialName + "\n"
-                + "Stock Quantity: " + stockQuantity + "\n"
-                + "Material Cost: " + materialCost;
+        try {
 
-        int confirm =
-                JOptionPane.showConfirmDialog(
+            int stockQuantity =
+                    Integer.parseInt(stockText);
+
+            double materialCost =
+                    Double.parseDouble(costText);
+
+            if (stockQuantity < 0
+                    || materialCost < 0) {
+
+                JOptionPane.showMessageDialog(
                         this,
-                        message,
-                        "Confirm Save",
-                        JOptionPane.YES_NO_OPTION
-                );
+                        "Stock quantity and cost cannot be negative.");
 
-        if (confirm != JOptionPane.YES_OPTION) {
+                return;
+            }
 
-            return;
+            String message =
+                    "Are you sure you want to save this inventory record?\n\n"
+                    + "Inventory Information:\n"
+                    + "Material: " + materialName + "\n"
+                    + "Stock Quantity: " + stockQuantity + "\n"
+                    + "Material Cost: " + materialCost;
+
+            int confirm =
+                    JOptionPane.showConfirmDialog(
+                            this,
+                            message,
+                            "Confirm Save",
+                            JOptionPane.YES_NO_OPTION
+                    );
+
+            if (confirm != JOptionPane.YES_OPTION) {
+
+                return;
+            }
+
+            String sql =
+                    "INSERT INTO dbo.Inventory "
+                    + "(material, stock_quantity, material_cost) "
+                    + "VALUES (?, ?, ?)";
+
+            Connection conn =
+                    getConnection();
+
+            PreparedStatement pst =
+                    conn.prepareStatement(sql);
+
+            pst.setString(1, materialName);
+            pst.setInt(2, stockQuantity);
+            pst.setDouble(3, materialCost);
+
+            pst.executeUpdate();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Inventory saved successfully.");
+
+            material.setText("");
+            stoqua.setText("");
+            matcost.setText("");
+
+            generateInventoryId();
+
+            pst.close();
+            conn.close();
+
+        } catch (NumberFormatException ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Stock quantity must be a whole number and material cost must be a number.");
+
+        } catch (java.sql.SQLException ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error: "
+                    + ex.getMessage());
+
+        } catch (Exception ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error: "
+                    + ex.getMessage());
         }
+    }
+
+    private void generateInventoryId() {
 
         String sql =
-                "INSERT INTO dbo.Inventory " +
-                "(material, stock_quantity, material_cost) " +
-                "VALUES (?, ?, ?)";
+                "SELECT ISNULL(MAX(inventory_id), 5999) + 1 AS next_id "
+                + "FROM dbo.Inventory";
 
-        Connection conn =
-                getConnection();
+        try {
 
-        PreparedStatement pst =
-                conn.prepareStatement(sql);
+            PreparedStatement pst =
+                    conn.prepareStatement(sql);
 
-        pst.setString(1, materialName);
-        pst.setInt(2, stockQuantity);
-        pst.setDouble(3, materialCost);
+            java.sql.ResultSet rs =
+                    pst.executeQuery();
 
-        pst.executeUpdate();
+            if (rs.next()) {
 
-        JOptionPane.showMessageDialog(
-                this,
-                "Inventory saved successfully.");
+                inventoryID.setText(
+                        String.valueOf(
+                                rs.getInt("next_id"))
+                );
 
-        material.setText("");
-        stoqua.setText("");
-        matcost.setText("");
+                inventoryID.setEditable(true);
+                inventoryID.setFocusable(true);
+            }
 
-        generateInventoryId();
+            rs.close();
+            pst.close();
 
-        pst.close();
-        conn.close();
+        } catch (java.sql.SQLException ex) {
 
-    } catch (NumberFormatException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Stock quantity must be a whole number and material cost must be a number.");
-
-    } catch (java.sql.SQLException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error: "
-                        + ex.getMessage());
-
-    } catch (Exception ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error: "
-                        + ex.getMessage());
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error generating Inventory ID: "
+                    + ex.getMessage());
+        }
     }
-}
 
-//auto-gen id
-private void generateInventoryId() {
+    private void backtotableActionPerformed(java.awt.event.ActionEvent evt) {
 
-    String sql =
-        "SELECT ISNULL(MAX(inventory_id), 5999) + 1 AS next_id " +
-        "FROM dbo.Inventory";
+        javax.swing.JFrame frame =
+                (javax.swing.JFrame)
+                javax.swing.SwingUtilities.getWindowAncestor(this);
 
-    try {
+        frame.setContentPane(new inventory());
+        frame.revalidate();
+        frame.repaint();
+    }
 
-        PreparedStatement pst =
-                conn.prepareStatement(sql);
+    // Variables declaration - do not modify
+    private javax.swing.JButton backtotable;
+    private javax.swing.JButton clear;
+    private javax.swing.JButton delete;
+    private javax.swing.JLabel iID;
+    private javax.swing.JTextField inventoryID;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel mainbg;
+    private javax.swing.JLabel mat;
+    private javax.swing.JTextField material;
+    private javax.swing.JLabel mc;
+    private javax.swing.JTextField matcost;
+    private javax.swing.JButton save;
+    private javax.swing.JLabel sq;
+    private javax.swing.JTextField stoqua;
+    private javax.swing.JButton update;
+    // End of variables declaration
 
-        java.sql.ResultSet rs =
-                pst.executeQuery();
+    private void loadFonts() {
 
-        if (rs.next()) {
+        try {
 
-            inventoryID.setText(
-                    String.valueOf(
-                            rs.getInt("next_id"))
+            customFont = java.awt.Font.createFont(
+                    java.awt.Font.TRUETYPE_FONT,
+                    getClass().getResourceAsStream(
+                            "/ifccrafts/assets/MyFont.ttf")
             );
 
-            inventoryID.setEditable(true);
-            inventoryID.setFocusable(true);
+        } catch (FontFormatException | IOException e) {
+
+            customFont =
+                    new java.awt.Font(
+                            "Serif",
+                            java.awt.Font.PLAIN,
+                            18);
         }
-
-        rs.close();
-        pst.close();
-
-    } catch (java.sql.SQLException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error generating Inventory ID: "
-                        + ex.getMessage());
     }
 }
