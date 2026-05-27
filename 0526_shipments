@@ -1,27 +1,162 @@
-    //load table
-    private void loadShipmentTable() {
-    
-        String sql =
-                "SELECT shipment_id, order_id, shipment_date, " +
-                "delivery_mode, courier, shipment_status " +
-                "FROM dbo.Shipments";
-    
+import javax.swing.JOptionPane;
+import java.sql.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.JComboBox;
+import com.toedter.calendar.JDateChooser;
+import javax.swing.DefaultCellEditor;
+import javax.swing.table.TableCellEditor;
+import java.awt.Component;
+import javax.swing.AbstractCellEditor;
+import javax.swing.JTable;
+
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
+ */
+
+
+/**
+ *
+ * @author hezekiahmagalona
+ */   
+ 
+public class shipments extends javax.swing.JPanel {
+
+    /**
+     * Creates new form customer
+     */  
+
+    private Connection conn;
+    private String[] originalIds;
+    private Object[][] originalData;
+
+    public shipments() {
+
+        initComponents();
+
         try {
-    
-            PreparedStatement pst = conn.prepareStatement(sql);
-            ResultSet rs = pst.executeQuery();
-    
+
+            conn = getConnection();
+
+        } catch (Exception e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Database connection failed: "
+                    + e.getMessage());
+
+            return;
+        }
+
+        loadShipmentTable();
+        customizeShipmentTable();
+    }
+
+    private Connection getConnection() throws Exception {
+
+        String url =
+                "jdbc:sqlserver://localhost:1433;"
+                + "databaseName=ifcdb;"
+                + "encrypt=true;"
+                + "trustServerCertificate=true";
+
+        String user = "sa";
+        String password = "Anolagam28";
+
+        return java.sql.DriverManager.getConnection(
+                url,
+                user,
+                password);
+    }
+
+    private void centerAlignShipmentTable() {
+
+        javax.swing.table.DefaultTableCellRenderer centerRenderer =
+                new javax.swing.table.DefaultTableCellRenderer();
+
+        centerRenderer.setHorizontalAlignment(
+                javax.swing.JLabel.CENTER);
+
+        for (int i = 0;
+             i < shipmenttable.getColumnCount();
+             i++) {
+
+            shipmenttable.getColumnModel()
+                    .getColumn(i)
+                    .setCellRenderer(centerRenderer);
+        }
+    }
+
+    public class DateCellEditor
+            extends AbstractCellEditor
+            implements TableCellEditor {
+
+        private JDateChooser dateChooser;
+
+        public DateCellEditor() {
+
+            dateChooser = new JDateChooser();
+
+            dateChooser.setDateFormatString(
+                    "yyyy-MM-dd");
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+
+            return dateChooser.getDate();
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(
+                JTable table,
+                Object value,
+                boolean isSelected,
+                int row,
+                int column) {
+
+            if (value instanceof java.util.Date) {
+
+                dateChooser.setDate(
+                        (java.util.Date) value);
+
+            } else {
+
+                dateChooser.setDate(null);
+            }
+
+            return dateChooser;
+        }
+    }
+
+    private void loadShipmentTable() {
+
+        try {
+
+            String sql =
+                    "SELECT shipment_id, order_id, "
+                    + "shipment_date, delivery_mode, "
+                    + "courier, shipment_status "
+                    + "FROM dbo.Shipments";
+
+            PreparedStatement pst =
+                    conn.prepareStatement(sql);
+
+            ResultSet rs =
+                    pst.executeQuery();
+
             DefaultTableModel model =
                     new DefaultTableModel() {
-    
+
                 @Override
                 public boolean isCellEditable(
-                        int row, int column) {
-    
+                        int row,
+                        int column) {
+
                     return column != 0;
                 }
             };
-    
+
             model.setColumnIdentifiers(new String[]{
                 "Shipment ID",
                 "Order ID",
@@ -30,300 +165,618 @@
                 "Courier",
                 "Status"
             });
-    
+
             java.util.List<String> idList =
                     new java.util.ArrayList<>();
-    
+
             java.util.List<Object[]> dataList =
                     new java.util.ArrayList<>();
-    
+
             while (rs.next()) {
-    
-                String id =
-                        String.valueOf(
-                                rs.getInt("shipment_id"));
-    
+
+                String shipmentId =
+                        rs.getString("shipment_id");
+
                 Object[] row = new Object[]{
-                    id,
+                    shipmentId,
                     rs.getInt("order_id"),
                     rs.getDate("shipment_date"),
                     rs.getString("delivery_mode"),
                     rs.getString("courier"),
                     rs.getString("shipment_status")
                 };
-    
+
                 model.addRow(row);
-                idList.add(id);
+
+                idList.add(shipmentId);
                 dataList.add(row);
             }
-    
+
             originalIds =
                     idList.toArray(new String[0]);
-    
+
             originalData =
                     dataList.toArray(new Object[0][]);
-    
+
             shipmenttable.setModel(model);
-    
+
+            customizeShipmentTable();
+
+            shipmenttable.getColumnModel()
+                    .getColumn(2)
+                    .setCellEditor(
+                            new DateCellEditor());
+
             String[] statuses = {
                 "Pending",
                 "Shipped",
                 "Delivered",
                 "Cancelled"
             };
-    
+
             JComboBox<String> comboBox =
                     new JComboBox<>(statuses);
-    
+
             shipmenttable.getColumnModel()
                     .getColumn(5)
                     .setCellEditor(
-                            new javax.swing.DefaultCellEditor(comboBox));
-    
+                            new DefaultCellEditor(comboBox));
+
             rs.close();
             pst.close();
-    
+
         } catch (Exception e) {
-    
+
             JOptionPane.showMessageDialog(
                     this,
                     "Error loading shipments: "
-                            + e.getMessage());
+                    + e.getMessage());
         }
     }
-  
-// save btn
-    private void savebtnActionPerformed(java.awt.event.ActionEvent evt) {                                        
-    
+
+    private void searchShipmentID() {
+
+        String inputShipmentID =
+                JOptionPane.showInputDialog(
+                        this,
+                        "Enter Shipment ID:");
+
+        if (inputShipmentID == null
+                || inputShipmentID.trim().isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Please enter an ID.");
+
+            return;
+        }
+
+        try {
+
+            String sql =
+                    "SELECT shipment_id, order_id, "
+                    + "shipment_date, delivery_mode, "
+                    + "courier, shipment_status "
+                    + "FROM dbo.Shipments "
+                    + "WHERE CAST(shipment_id AS VARCHAR(30)) LIKE ?";
+
+            PreparedStatement pst =
+                    conn.prepareStatement(sql);
+
+            pst.setString(
+                    1,
+                    "%" + inputShipmentID.trim() + "%");
+
+            ResultSet rs =
+                    pst.executeQuery();
+
+            DefaultTableModel model =
+                    new DefaultTableModel() {
+
+                @Override
+                public boolean isCellEditable(
+                        int row,
+                        int column) {
+
+                    return column != 0;
+                }
+            };
+
+            model.setColumnIdentifiers(new String[]{
+                "Shipment ID",
+                "Order ID",
+                "Shipment Date",
+                "Delivery Mode",
+                "Courier",
+                "Status"
+            });
+
+            java.util.List<String> idList =
+                    new java.util.ArrayList<>();
+
+            java.util.List<Object[]> dataList =
+                    new java.util.ArrayList<>();
+
+            boolean found = false;
+
+            while (rs.next()) {
+
+                found = true;
+
+                String shipmentId =
+                        rs.getString("shipment_id");
+
+                Object[] row = new Object[]{
+                    shipmentId,
+                    rs.getInt("order_id"),
+                    rs.getDate("shipment_date"),
+                    rs.getString("delivery_mode"),
+                    rs.getString("courier"),
+                    rs.getString("shipment_status")
+                };
+
+                model.addRow(row);
+
+                idList.add(shipmentId);
+                dataList.add(row);
+            }
+
+            if (!found) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No matching record found.");
+
+                rs.close();
+                pst.close();
+
+                return;
+            }
+
+            originalIds =
+                    idList.toArray(new String[0]);
+
+            originalData =
+                    dataList.toArray(new Object[0][]);
+
+            shipmenttable.setModel(model);
+
+            customizeShipmentTable();
+
+            shipmenttable.getColumnModel()
+                    .getColumn(2)
+                    .setCellEditor(
+                            new DateCellEditor());
+
+            String[] statuses = {
+                "Pending",
+                "Shipped",
+                "Delivered",
+                "Cancelled"
+            };
+
+            JComboBox<String> comboBox =
+                    new JComboBox<>(statuses);
+
+            shipmenttable.getColumnModel()
+                    .getColumn(5)
+                    .setCellEditor(
+                            new DefaultCellEditor(comboBox));
+
+            rs.close();
+            pst.close();
+
+        } catch (Exception e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Search error: "
+                    + e.getMessage());
+        }
+    }
+
+    private void customizeShipmentTable() {
+
+        shipmenttable.setBackground(java.awt.Color.WHITE);
+
+        shipmenttable.setForeground(
+                new java.awt.Color(25, 25, 25));
+
+        shipmenttable.setFont(
+                new java.awt.Font(
+                        "Baskerville",
+                        java.awt.Font.PLAIN,
+                        18));
+
+        shipmenttable.setRowHeight(38);
+
+        shipmenttable.setGridColor(
+                new java.awt.Color(220, 220, 220));
+
+        shipmenttable.setShowGrid(true);
+        shipmenttable.setShowVerticalLines(false);
+
+        shipmenttable.setSelectionBackground(
+                new java.awt.Color(35, 35, 35));
+
+        shipmenttable.setSelectionForeground(
+                java.awt.Color.WHITE);
+
+        shipmenttable.setAutoResizeMode(
+                javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        shipmenttable.setFillsViewportHeight(true);
+
+        shipmenttable.getColumnModel()
+                .getColumn(0)
+                .setMinWidth(100);
+
+        shipmenttable.getColumnModel()
+                .getColumn(0)
+                .setPreferredWidth(120);
+
+        shipmenttable.getColumnModel()
+                .getColumn(0)
+                .setMaxWidth(140);
+
+        javax.swing.table.JTableHeader header =
+                shipmenttable.getTableHeader();
+
+        header.setPreferredSize(
+                new java.awt.Dimension(
+                        header.getWidth(),
+                        42));
+
+        header.setReorderingAllowed(false);
+        header.setResizingAllowed(true);
+
+        javax.swing.table.DefaultTableCellRenderer headerRenderer =
+                new javax.swing.table.DefaultTableCellRenderer();
+
+        headerRenderer.setHorizontalAlignment(
+                javax.swing.JLabel.CENTER);
+
+        headerRenderer.setBackground(
+                new java.awt.Color(28, 28, 28));
+
+        headerRenderer.setForeground(
+                java.awt.Color.WHITE);
+
+        headerRenderer.setFont(
+                new java.awt.Font(
+                        "Big Caslon",
+                        java.awt.Font.BOLD,
+                        18));
+
+        headerRenderer.setBorder(
+                javax.swing.BorderFactory
+                        .createMatteBorder(
+                                0,
+                                0,
+                                1,
+                                1,
+                                new java.awt.Color(65, 65, 65)));
+
+        for (int i = 0;
+             i < shipmenttable.getColumnModel().getColumnCount();
+             i++) {
+
+            shipmenttable.getColumnModel()
+                    .getColumn(i)
+                    .setHeaderRenderer(headerRenderer);
+        }
+
+        centerAlignShipmentTable();
+    }
+
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">
+    private void initComponents() {
+
+        back = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        edittable = new javax.swing.JButton();
+        searchshipmentID = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        shipmenttable = new javax.swing.JTable();
+        bg = new javax.swing.JLabel();
+        refresh = new javax.swing.JButton();
+        save = new javax.swing.JButton();
+
+        setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        back.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/back.png")));
+        back.setBorderPainted(false);
+        back.setContentAreaFilled(false);
+        back.setFocusPainted(false);
+        back.addActionListener(this::backActionPerformed);
+        add(back, new org.netbeans.lib.awtextra.AbsoluteConstraints(98, 75, -1, 77));
+
+        edittable.setText("Edit Table");
+        edittable.addActionListener(this::edittableActionPerformed);
+        add(edittable, new org.netbeans.lib.awtextra.AbsoluteConstraints(1060, 100, 120, 40));
+
+        searchshipmentID.setText("Search Shipment ID");
+        searchshipmentID.addActionListener(this::searchshipmentIDActionPerformed);
+        add(searchshipmentID, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 100, 410, 40));
+
+        shipmenttable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {},
+            new String [] {}
+        ));
+
+        jScrollPane1.setViewportView(shipmenttable);
+
+        add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 170, 1070, 580));
+
+        refresh.setText("Refresh");
+        refresh.addActionListener(this::refreshActionPerformed);
+        add(refresh, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 110, -1, -1));
+
+        save.setText("Save");
+        save.addActionListener(this::saveActionPerformed);
+        add(save, new org.netbeans.lib.awtextra.AbsoluteConstraints(890, 110, -1, -1));
+
+        bg.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/mainbg.png")));
+        add(bg, new org.netbeans.lib.awtextra.AbsoluteConstraints(-780, 150, 1300, 850));
+    }// </editor-fold>
+
+    private void backActionPerformed(java.awt.event.ActionEvent evt) {
+
+        javax.swing.JFrame frame =
+                (javax.swing.JFrame)
+                        javax.swing.SwingUtilities
+                                .getWindowAncestor(this);
+
+        frame.setContentPane(new homepage());
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    private void edittableActionPerformed(java.awt.event.ActionEvent evt) {
+
+        javax.swing.JFrame frame =
+                (javax.swing.JFrame)
+                        javax.swing.SwingUtilities
+                                .getWindowAncestor(this);
+
+        frame.setContentPane(new editshipment());
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    private void searchshipmentIDActionPerformed(java.awt.event.ActionEvent evt) {
+
+        searchShipmentID();
+    }
+
+    private void refreshActionPerformed(java.awt.event.ActionEvent evt) {
+
+        loadShipmentTable();
+
+        JOptionPane.showMessageDialog(
+                this,
+                "All records are now displayed.");
+    }
+
+    private void saveActionPerformed(java.awt.event.ActionEvent evt) {
+
         if (shipmenttable.isEditing()) {
-    
+
             shipmenttable.getCellEditor()
                     .stopCellEditing();
         }
-    
+
         DefaultTableModel model =
                 (DefaultTableModel)
                         shipmenttable.getModel();
-    
+
         StringBuilder preview =
                 new StringBuilder();
-    
+
         boolean hasChanges = false;
-    
+
         try {
-    
+
             for (int i = 0;
                  i < model.getRowCount();
                  i++) {
-    
+
                 boolean rowChanged = false;
-    
+
                 for (int j = 0;
                      j < model.getColumnCount();
                      j++) {
-    
+
                     Object newVal =
                             model.getValueAt(i, j);
-    
+
                     Object oldVal =
                             originalData[i][j];
-    
-                    if (newVal == null &&
-                            oldVal != null ||
-    
-                            newVal != null &&
-                            !newVal.toString()
-                                    .equals(
-                                            oldVal.toString())) {
-    
+
+                    if ((newVal == null && oldVal != null)
+                            || (newVal != null
+                            && !newVal.toString().equals(
+                                    oldVal != null
+                                            ? oldVal.toString()
+                                            : ""))) {
+
                         rowChanged = true;
                         break;
                     }
                 }
-    
+
                 if (rowChanged) {
-    
+
                     hasChanges = true;
-    
+
                     preview.append("Shipment ID: ")
                             .append(model.getValueAt(i, 0))
                             .append("\n")
-    
+
                             .append("Order ID: ")
                             .append(model.getValueAt(i, 1))
                             .append("\n")
-    
+
                             .append("Shipment Date: ")
                             .append(model.getValueAt(i, 2))
                             .append("\n")
-    
+
                             .append("Delivery Mode: ")
                             .append(model.getValueAt(i, 3))
                             .append("\n")
-    
+
                             .append("Courier: ")
                             .append(model.getValueAt(i, 4))
                             .append("\n")
-    
+
                             .append("Status: ")
                             .append(model.getValueAt(i, 5))
                             .append("\n\n");
                 }
             }
-    
+
             if (!hasChanges) {
-    
+
                 JOptionPane.showMessageDialog(
                         this,
                         "No changes detected.");
-    
+
                 return;
             }
-    
+
             int confirm =
                     JOptionPane.showConfirmDialog(
                             this,
                             "SAVE THESE CHANGES ONLY:\n\n"
-                                    + preview,
+                            + preview,
                             "Confirm Save",
                             JOptionPane.YES_NO_OPTION);
-    
-            if (confirm !=
-                    JOptionPane.YES_OPTION) {
-    
+
+            if (confirm != JOptionPane.YES_OPTION) {
+
                 return;
             }
-    
+
             for (int i = 0;
                  i < model.getRowCount();
                  i++) {
-    
+
                 boolean rowChanged = false;
-    
+
                 for (int j = 0;
                      j < model.getColumnCount();
                      j++) {
-    
+
                     Object newVal =
                             model.getValueAt(i, j);
-    
+
                     Object oldVal =
                             originalData[i][j];
-    
-                    if (newVal == null &&
-                            oldVal != null ||
-    
-                            newVal != null &&
-                            !newVal.toString()
-                                    .equals(
-                                            oldVal.toString())) {
-    
+
+                    if ((newVal == null && oldVal != null)
+                            || (newVal != null
+                            && !newVal.toString().equals(
+                                    oldVal != null
+                                            ? oldVal.toString()
+                                            : ""))) {
+
                         rowChanged = true;
                         break;
                     }
                 }
-    
-                if (!rowChanged) continue;
-    
+
+                if (!rowChanged) {
+                    continue;
+                }
+
                 int shipmentId =
                         Integer.parseInt(
                                 originalIds[i]);
-    
+
                 int orderId =
                         Integer.parseInt(
                                 model.getValueAt(i, 1)
                                         .toString());
-    
-                java.sql.Date shipmentdate =
-                        java.sql.Date.valueOf(
-                                model.getValueAt(i, 2)
-                                        .toString());
-    
+
+                Object dateObj =
+                        model.getValueAt(i, 2);
+
+                java.sql.Date shipmentdate = null;
+
+                if (dateObj instanceof java.util.Date) {
+
+                    shipmentdate =
+                            new java.sql.Date(
+                                    ((java.util.Date) dateObj)
+                                            .getTime());
+                }
+
                 String deliverymode =
                         model.getValueAt(i, 3)
                                 .toString();
-    
+
                 String courier =
                         model.getValueAt(i, 4)
                                 .toString();
-    
-                String shipmenttatus =
+
+                String shipmentstatus =
                         model.getValueAt(i, 5)
                                 .toString();
-    
+
                 String sql =
-                        "UPDATE dbo.Shipments SET " +
-                        "order_id=?, " +
-                        "shipment_date=?, " +
-                        "delivery_mode=?, " +
-                        "courier=?, " +
-                        "shipment_status=? " +
-                        "WHERE shipment_id=?";
-    
+                        "UPDATE dbo.Shipments SET "
+                        + "order_id=?, "
+                        + "shipment_date=?, "
+                        + "delivery_mode=?, "
+                        + "courier=?, "
+                        + "shipment_status=? "
+                        + "WHERE shipment_id=?";
+
                 PreparedStatement pst =
                         conn.prepareStatement(sql);
-    
+
                 pst.setInt(1, orderId);
                 pst.setDate(2, shipmentdate);
                 pst.setString(3, deliverymode);
                 pst.setString(4, courier);
                 pst.setString(5, shipmentstatus);
                 pst.setInt(6, shipmentId);
-    
+
                 pst.executeUpdate();
                 pst.close();
             }
-    
+
             JOptionPane.showMessageDialog(
                     this,
                     "Changes saved successfully!");
-    
+
         } catch (Exception e) {
-    
+
             JOptionPane.showMessageDialog(
                     this,
                     "Error saving changes: "
-                            + e.getMessage());
+                    + e.getMessage());
         }
 
-    loadShipmentTable();
-}
-
-//auto-generated dhipment id
-private void generateShipmentId() {
-
-    String sql =
-        "SELECT ISNULL(MAX(shipment_id), 4999) + 1 AS next_id " +
-        "FROM dbo.Shipments";
-
-    try {
-
-        PreparedStatement pst =
-                conn.prepareStatement(sql);
-
-        java.sql.ResultSet rs =
-                pst.executeQuery();
-
-        if (rs.next()) {
-
-            shipmentID.setText(
-                    String.valueOf(
-                            rs.getInt("next_id"))
-            );
-
-            shipmentID.setEditable(true);
-            shipmentID.setFocusable(true);
-        }
-
-        rs.close();
-        pst.close();
-
-    } catch (java.sql.SQLException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error generating Shipment ID: "
-                        + ex.getMessage());
+        loadShipmentTable();
     }
-}
 
+    // Variables declaration - do not modify
+    private javax.swing.JButton back;
+    private javax.swing.JLabel bg;
+    private javax.swing.JButton edittable;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JButton refresh;
+    private javax.swing.JButton save;
+    private javax.swing.JButton searchshipmentID;
+    private javax.swing.JTable shipmenttable;
+    // End of variables declaration
+}
