@@ -417,18 +417,39 @@ public class editorderitem extends javax.swing.JPanel {
         // MAY BAGO
         int rowsInserted = pst.executeUpdate();
         if (rowsInserted > 0) {
-            JOptionPane.showMessageDialog(this,"Order Item saved successfully!");
-        
-            // Clear fields AFTER save
-            productID.setText("");
-            quantity.setText("");
 
-            // Keep Order ID so user can add more items
-            productID.requestFocus();
+            JOptionPane.showMessageDialog(this,"Order Item saved successfully!");
+
+            int choice = JOptionPane.showConfirmDialog(
+                this,
+                "Will you save another record with Order ID "
+                + orderIDValue + "?",
+                "Add Another Item",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (choice == JOptionPane.YES_OPTION) {
+                // stay in editorderitem
+                productID.setText("");
+                quantity.setText("");
+                priceatorder.setText("");
+                productID.requestFocus();
+
         } else {
-            JOptionPane.showMessageDialog(this,"Save failed.");
+
+            javax.swing.JFrame frame =
+            (javax.swing.JFrame)
+            javax.swing.SwingUtilities.getWindowAncestor(this);
+
+            frame.setContentPane(new edittransaction(String.valueOf(orderIDValue)));
+
+            frame.revalidate();
+            frame.repaint();
         }
-        // HANGGANG DITO
+
+    } else {
+        JOptionPane.showMessageDialog(this,"Save failed.");
+    }
         pst.close();
         conn.close();
     } catch (Exception e) {
