@@ -1,308 +1,675 @@
-//load table
-private void loadInventoryTable() {
+import javax.swing.JOptionPane;
+import java.sql.*;
+import javax.swing.table.DefaultTableModel;
 
-    String sql =
-            "SELECT inventory_id, material, " +
-            "stock_quantity, material_cost " +
-            "FROM dbo.Inventory";
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
+ */
 
-    try {
 
-        PreparedStatement pst =
-                conn.prepareStatement(sql);
+/**
+ *
+ * @author hezekiahmagalona
+ */
 
-        ResultSet rs =
-                pst.executeQuery();
+public class inventory extends javax.swing.JPanel {
 
-        DefaultTableModel model =
-                new DefaultTableModel() {
+    /**
+     * Creates new form customer
+     */
+    private Connection conn;
+    private String[] originalIds;
+    private Object[][] originalData;
 
-            @Override
-            public boolean isCellEditable(
-                    int row, int column) {
+    public inventory() {
 
-                return column != 0;
-            }
-        };
+        initComponents();
 
-        model.setColumnIdentifiers(new String[]{
-            "Inventory ID",
-            "Material",
-            "Stock Quantity",
-            "Material Cost"
-        });
+        try {
 
-        java.util.List<String> idList =
-                new java.util.ArrayList<>();
+            conn = getConnection();
 
-        java.util.List<Object[]> dataList =
-                new java.util.ArrayList<>();
-
-        while (rs.next()) {
-
-            String id =
-                    String.valueOf(
-                            rs.getInt("inventory_id"));
-
-            Object[] row = new Object[]{
-                id,
-                rs.getString("material"),
-                rs.getInt("stock_quantity"),
-                rs.getDouble("material_cost")
-            };
-
-            model.addRow(row);
-            idList.add(id);
-            dataList.add(row);
-        }
-
-        originalIds =
-                idList.toArray(new String[0]);
-
-        originalData =
-                dataList.toArray(new Object[0][]);
-
-        inventorytable.setModel(model);
-
-        rs.close();
-        pst.close();
-
-    } catch (Exception e) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error loading inventory: "
-                        + e.getMessage());
-    }
-}
-
-//save btn
-private void savebtnActionPerformed(java.awt.event.ActionEvent evt) {                                        
-
-    if (inventorytable.isEditing()) {
-
-        inventorytable.getCellEditor()
-                .stopCellEditing();
-    }
-
-    DefaultTableModel model =
-            (DefaultTableModel)
-                    inventorytable.getModel();
-
-    StringBuilder preview =
-            new StringBuilder();
-
-    boolean hasChanges = false;
-
-    try {
-
-        for (int i = 0;
-             i < model.getRowCount();
-             i++) {
-
-            boolean rowChanged = false;
-
-            for (int j = 0;
-                 j < model.getColumnCount();
-                 j++) {
-
-                Object newVal =
-                        model.getValueAt(i, j);
-
-                Object oldVal =
-                        originalData[i][j];
-
-                if (newVal == null &&
-                        oldVal != null ||
-
-                        newVal != null &&
-                        !newVal.toString()
-                                .equals(
-                                        oldVal.toString())) {
-
-                    rowChanged = true;
-                    break;
-                }
-            }
-
-            if (rowChanged) {
-
-                hasChanges = true;
-
-                preview.append("Inventory ID: ")
-                        .append(model.getValueAt(i, 0))
-                        .append("\n")
-
-                        .append("Material: ")
-                        .append(model.getValueAt(i, 1))
-                        .append("\n")
-
-                        .append("Stock Quantity: ")
-                        .append(model.getValueAt(i, 2))
-                        .append("\n")
-
-                        .append("Material Cost: ")
-                        .append(model.getValueAt(i, 3))
-                        .append("\n\n");
-            }
-        }
-
-        if (!hasChanges) {
+        } catch (Exception e) {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "No changes detected.");
+                    "Database connection failed: "
+                    + e.getMessage());
 
             return;
         }
 
-        int confirm =
-                JOptionPane.showConfirmDialog(
-                        this,
-                        "SAVE THESE CHANGES ONLY:\n\n"
-                                + preview,
-                        "Confirm Save",
-                        JOptionPane.YES_NO_OPTION);
+        loadInventoryTable();
+        customizeInventoryTable();
+        centerAlignInventoryTable();
+    }
 
-        if (confirm !=
-                JOptionPane.YES_OPTION) {
+    private Connection getConnection() throws Exception {
 
-            return;
-        }
+        String url =
+                "jdbc:sqlserver://localhost:1433;"
+                + "databaseName=ifcdb;"
+                + "encrypt=true;"
+                + "trustServerCertificate=true";
+
+        String user = "sa";
+        String password = "Anolagam28";
+
+        return java.sql.DriverManager.getConnection(
+                url,
+                user,
+                password);
+    }
+
+    private void centerAlignInventoryTable() {
+
+        javax.swing.table.DefaultTableCellRenderer centerRenderer =
+                new javax.swing.table.DefaultTableCellRenderer();
+
+        centerRenderer.setHorizontalAlignment(
+                javax.swing.JLabel.CENTER);
 
         for (int i = 0;
-             i < model.getRowCount();
+             i < inventorytable.getColumnCount();
              i++) {
 
-            boolean rowChanged = false;
+            inventorytable.getColumnModel()
+                    .getColumn(i)
+                    .setCellRenderer(centerRenderer);
+        }
+    }
 
-            for (int j = 0;
-                 j < model.getColumnCount();
-                 j++) {
+    private void loadInventoryTable() {
 
-                Object newVal =
-                        model.getValueAt(i, j);
+        String sql =
+                "SELECT inventory_id, material, "
+                + "stock_quantity, material_cost "
+                + "FROM dbo.Inventory";
 
-                Object oldVal =
-                        originalData[i][j];
-
-                if (newVal == null &&
-                        oldVal != null ||
-
-                        newVal != null &&
-                        !newVal.toString()
-                                .equals(
-                                        oldVal.toString())) {
-
-                    rowChanged = true;
-                    break;
-                }
-            }
-
-            if (!rowChanged) continue;
-
-            int inventoryId =
-                    Integer.parseInt(
-                            originalIds[i]);
-
-            String material =
-                    model.getValueAt(i, 1)
-                            .toString();
-
-            int stoqua =
-                    Integer.parseInt(
-                            model.getValueAt(i, 2)
-                                    .toString());
-
-            double matcost =
-                    Double.parseDouble(
-                            model.getValueAt(i, 3)
-                                    .toString());
-
-            if (stoqua < 0 ||
-                    matcost< 0) {
-
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Stock and cost must be non-negative.");
-
-                return;
-            }
-
-            String sql =
-                    "UPDATE dbo.Inventory SET " +
-                    "material=?, " +
-                    "stock_quantity=?, " +
-                    "material_cost=? " +
-                    "WHERE inventory_id=?";
+        try {
 
             PreparedStatement pst =
                     conn.prepareStatement(sql);
 
-            pst.setString(1, material);
-            pst.setInt(2, stoqua);
-            pst.setDouble(3, matcost);
-            pst.setInt(4, inventoryID);
+            ResultSet rs =
+                    pst.executeQuery();
 
-            pst.executeUpdate();
+            DefaultTableModel model =
+                    new DefaultTableModel() {
+
+                @Override
+                public boolean isCellEditable(
+                        int row,
+                        int column) {
+
+                    return column != 0;
+                }
+            };
+
+            model.setColumnIdentifiers(new String[]{
+                "Inventory ID",
+                "Material",
+                "Stock Quantity",
+                "Material Cost"
+            });
+
+            java.util.List<String> idList =
+                    new java.util.ArrayList<>();
+
+            java.util.List<Object[]> dataList =
+                    new java.util.ArrayList<>();
+
+            while (rs.next()) {
+
+                String id =
+                        String.valueOf(
+                                rs.getInt("inventory_id"));
+
+                Object[] row = new Object[]{
+                    id,
+                    rs.getString("material"),
+                    rs.getInt("stock_quantity"),
+                    rs.getDouble("material_cost")
+                };
+
+                model.addRow(row);
+
+                idList.add(id);
+                dataList.add(row);
+            }
+
+            originalIds =
+                    idList.toArray(new String[0]);
+
+            originalData =
+                    dataList.toArray(new Object[0][]);
+
+            inventorytable.setModel(model);
+
+            customizeInventoryTable();
+
+            rs.close();
             pst.close();
+
+        } catch (Exception e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error loading inventory: "
+                    + e.getMessage());
         }
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Changes saved successfully!");
-
-    } catch (NumberFormatException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Stock and cost must be numbers.");
-
-    } catch (SQLException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error saving changes: "
-                        + ex.getMessage());
     }
 
-    loadInventoryTable();
-}
+    private void searchInventoryID() {
 
-//auto-generated inventory id
-private void generateInventoryId() {
+        String inputInventoryID =
+                JOptionPane.showInputDialog(
+                        this,
+                        "Enter Inventory ID:");
 
-    String sql =
-        "SELECT ISNULL(MAX(inventory_id), 5999) + 1 AS next_id " +
-        "FROM dbo.Inventory";
+        if (inputInventoryID == null
+                || inputInventoryID.trim().isEmpty()) {
 
-    try {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Please enter an ID.");
 
-        PreparedStatement pst =
-                conn.prepareStatement(sql);
-
-        java.sql.ResultSet rs =
-                pst.executeQuery();
-
-        if (rs.next()) {
-
-            inventoryID.setText(
-                    String.valueOf(
-                            rs.getInt("next_id"))
-            );
-
-            inventoryID.setEditable(true);
-            inventoryID.setFocusable(true);
+            return;
         }
 
-        rs.close();
-        pst.close();
+        try {
 
-    } catch (java.sql.SQLException ex) {
+            String sql =
+                    "SELECT inventory_id, material, "
+                    + "stock_quantity, material_cost "
+                    + "FROM dbo.Inventory "
+                    + "WHERE CAST(inventory_id AS VARCHAR(30)) LIKE ?";
+
+            PreparedStatement pst =
+                    conn.prepareStatement(sql);
+
+            pst.setString(
+                    1,
+                    "%" + inputInventoryID.trim() + "%");
+
+            ResultSet rs =
+                    pst.executeQuery();
+
+            DefaultTableModel model =
+                    new DefaultTableModel() {
+
+                @Override
+                public boolean isCellEditable(
+                        int row,
+                        int column) {
+
+                    return column != 0;
+                }
+            };
+
+            model.setColumnIdentifiers(new String[]{
+                "Inventory ID",
+                "Material",
+                "Stock Quantity",
+                "Material Cost"
+            });
+
+            java.util.List<String> idList =
+                    new java.util.ArrayList<>();
+
+            java.util.List<Object[]> dataList =
+                    new java.util.ArrayList<>();
+
+            boolean found = false;
+
+            while (rs.next()) {
+
+                found = true;
+
+                String inventoryId =
+                        rs.getString("inventory_id");
+
+                Object[] row = new Object[]{
+                    inventoryId,
+                    rs.getString("material"),
+                    rs.getInt("stock_quantity"),
+                    rs.getDouble("material_cost")
+                };
+
+                model.addRow(row);
+
+                idList.add(inventoryId);
+                dataList.add(row);
+            }
+
+            if (!found) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No matching record found.");
+
+                rs.close();
+                pst.close();
+
+                return;
+            }
+
+            originalIds =
+                    idList.toArray(new String[0]);
+
+            originalData =
+                    dataList.toArray(new Object[0][]);
+
+            inventorytable.setModel(model);
+
+            customizeInventoryTable();
+
+            rs.close();
+            pst.close();
+
+        } catch (Exception e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Search error: "
+                    + e.getMessage());
+        }
+    }
+
+    private void saveActionPerformed(java.awt.event.ActionEvent evt) {
+
+        if (inventorytable.isEditing()) {
+
+            inventorytable.getCellEditor()
+                    .stopCellEditing();
+        }
+
+        DefaultTableModel model =
+                (DefaultTableModel)
+                        inventorytable.getModel();
+
+        StringBuilder preview =
+                new StringBuilder();
+
+        boolean hasChanges = false;
+
+        try {
+
+            for (int i = 0;
+                 i < model.getRowCount();
+                 i++) {
+
+                boolean rowChanged = false;
+
+                for (int j = 0;
+                     j < model.getColumnCount();
+                     j++) {
+
+                    Object newVal =
+                            model.getValueAt(i, j);
+
+                    Object oldVal =
+                            originalData[i][j];
+
+                    if ((newVal == null && oldVal != null)
+                            || (newVal != null
+                            && !newVal.toString()
+                                    .equals(oldVal.toString()))) {
+
+                        rowChanged = true;
+                        break;
+                    }
+                }
+
+                if (rowChanged) {
+
+                    hasChanges = true;
+
+                    preview.append("Inventory ID: ")
+                            .append(model.getValueAt(i, 0))
+                            .append("\n")
+
+                            .append("Material: ")
+                            .append(model.getValueAt(i, 1))
+                            .append("\n")
+
+                            .append("Stock Quantity: ")
+                            .append(model.getValueAt(i, 2))
+                            .append("\n")
+
+                            .append("Material Cost: ")
+                            .append(model.getValueAt(i, 3))
+                            .append("\n\n");
+                }
+            }
+
+            if (!hasChanges) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No changes detected.");
+
+                return;
+            }
+
+            int confirm =
+                    JOptionPane.showConfirmDialog(
+                            this,
+                            "SAVE THESE CHANGES ONLY:\n\n"
+                            + preview,
+                            "Confirm Save",
+                            JOptionPane.YES_NO_OPTION);
+
+            if (confirm
+                    != JOptionPane.YES_OPTION) {
+
+                return;
+            }
+
+            for (int i = 0;
+                 i < model.getRowCount();
+                 i++) {
+
+                boolean rowChanged = false;
+
+                for (int j = 0;
+                     j < model.getColumnCount();
+                     j++) {
+
+                    Object newVal =
+                            model.getValueAt(i, j);
+
+                    Object oldVal =
+                            originalData[i][j];
+
+                    if ((newVal == null && oldVal != null)
+                            || (newVal != null
+                            && !newVal.toString()
+                                    .equals(oldVal.toString()))) {
+
+                        rowChanged = true;
+                        break;
+                    }
+                }
+
+                if (!rowChanged) {
+                    continue;
+                }
+
+                int inventoryId =
+                        Integer.parseInt(
+                                originalIds[i]);
+
+                String material =
+                        model.getValueAt(i, 1)
+                                .toString();
+
+                int stockQuantity =
+                        Integer.parseInt(
+                                model.getValueAt(i, 2)
+                                        .toString());
+
+                double materialCost =
+                        Double.parseDouble(
+                                model.getValueAt(i, 3)
+                                        .toString());
+
+                if (stockQuantity < 0
+                        || materialCost < 0) {
+
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Stock and cost must be non-negative.");
+
+                    return;
+                }
+
+                String sql =
+                        "UPDATE dbo.Inventory SET "
+                        + "material=?, "
+                        + "stock_quantity=?, "
+                        + "material_cost=? "
+                        + "WHERE inventory_id=?";
+
+                PreparedStatement pst =
+                        conn.prepareStatement(sql);
+
+                pst.setString(1, material);
+                pst.setInt(2, stockQuantity);
+                pst.setDouble(3, materialCost);
+                pst.setInt(4, inventoryId);
+
+                pst.executeUpdate();
+                pst.close();
+            }
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Changes saved successfully!");
+
+        } catch (NumberFormatException ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Stock and cost must be numbers.");
+
+        } catch (SQLException ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error saving changes: "
+                    + ex.getMessage());
+        }
+
+        loadInventoryTable();
+    }
+
+    private void customizeInventoryTable() {
+
+        inventorytable.setBackground(
+                java.awt.Color.WHITE);
+
+        inventorytable.setForeground(
+                new java.awt.Color(25, 25, 25));
+
+        inventorytable.setFont(
+                new java.awt.Font(
+                        "Baskerville",
+                        java.awt.Font.PLAIN,
+                        18));
+
+        inventorytable.setRowHeight(38);
+
+        inventorytable.setGridColor(
+                new java.awt.Color(220, 220, 220));
+
+        inventorytable.setShowGrid(true);
+
+        inventorytable.setShowVerticalLines(false);
+
+        inventorytable.setSelectionBackground(
+                new java.awt.Color(35, 35, 35));
+
+        inventorytable.setSelectionForeground(
+                java.awt.Color.WHITE);
+
+        inventorytable.setAutoResizeMode(
+                javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        inventorytable.setFillsViewportHeight(true);
+
+        inventorytable.getColumnModel()
+                .getColumn(0)
+                .setMinWidth(100);
+
+        inventorytable.getColumnModel()
+                .getColumn(0)
+                .setPreferredWidth(120);
+
+        inventorytable.getColumnModel()
+                .getColumn(0)
+                .setMaxWidth(140);
+
+        javax.swing.table.JTableHeader header =
+                inventorytable.getTableHeader();
+
+        header.setPreferredSize(
+                new java.awt.Dimension(
+                        header.getWidth(),
+                        42));
+
+        header.setReorderingAllowed(false);
+        header.setResizingAllowed(true);
+
+        javax.swing.table.DefaultTableCellRenderer headerRenderer =
+                new javax.swing.table.DefaultTableCellRenderer();
+
+        headerRenderer.setHorizontalAlignment(
+                javax.swing.JLabel.CENTER);
+
+        headerRenderer.setBackground(
+                new java.awt.Color(28, 28, 28));
+
+        headerRenderer.setForeground(
+                java.awt.Color.WHITE);
+
+        headerRenderer.setFont(
+                new java.awt.Font(
+                        "Big Caslon",
+                        java.awt.Font.BOLD,
+                        18));
+
+        headerRenderer.setBorder(
+                javax.swing.BorderFactory
+                        .createMatteBorder(
+                                0,
+                                0,
+                                1,
+                                1,
+                                new java.awt.Color(65, 65, 65)));
+
+        for (int i = 0;
+             i < inventorytable.getColumnModel().getColumnCount();
+             i++) {
+
+            inventorytable.getColumnModel()
+                    .getColumn(i)
+                    .setHeaderRenderer(headerRenderer);
+        }
+
+        centerAlignInventoryTable();
+    }
+
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">
+    private void initComponents() {
+
+        back = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        searchinventoryID = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        inventorytable = new javax.swing.JTable();
+        edittable = new javax.swing.JButton();
+        refresh = new javax.swing.JButton();
+        save = new javax.swing.JButton();
+        bg = new javax.swing.JLabel();
+
+        setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        back.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/back.png")));
+        back.setBorderPainted(false);
+        back.setContentAreaFilled(false);
+        back.setFocusPainted(false);
+        back.addActionListener(this::backActionPerformed);
+        add(back, new org.netbeans.lib.awtextra.AbsoluteConstraints(98, 75, -1, 77));
+
+        searchinventoryID.setFont(new java.awt.Font("Kokonor", 0, 18));
+        searchinventoryID.setText("Search Inventory ID");
+        searchinventoryID.addActionListener(this::searchinventoryIDActionPerformed);
+        add(searchinventoryID, new org.netbeans.lib.awtextra.AbsoluteConstraints(250, 100, 430, 40));
+
+        refresh.setFont(new java.awt.Font("Kokonor", 0, 18));
+        refresh.setText("Refresh");
+        refresh.addActionListener(this::refreshActionPerformed);
+        add(refresh, new org.netbeans.lib.awtextra.AbsoluteConstraints(730, 100, 120, 40));
+
+        save.setFont(new java.awt.Font("Kokonor", 0, 18));
+        save.setText("Save");
+        save.addActionListener(this::saveActionPerformed);
+        add(save, new org.netbeans.lib.awtextra.AbsoluteConstraints(880, 100, 120, 40));
+
+        edittable.setFont(new java.awt.Font("Kokonor", 0, 18));
+        edittable.setText("Edit Table");
+        edittable.addActionListener(this::edittableActionPerformed);
+        add(edittable, new org.netbeans.lib.awtextra.AbsoluteConstraints(1040, 100, 140, 40));
+
+        inventorytable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {},
+            new String [] {}
+        ));
+
+        jScrollPane1.setViewportView(inventorytable);
+
+        add(jScrollPane1, new org.netbeans.lib.awtextra.AbsoluteConstraints(110, 170, 1070, 580));
+
+        bg.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/mainbg.png")));
+        add(bg, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1300, 850));
+    }// </editor-fold>
+
+    private void backActionPerformed(java.awt.event.ActionEvent evt) {
+
+        javax.swing.JFrame frame =
+                (javax.swing.JFrame)
+                        javax.swing.SwingUtilities
+                                .getWindowAncestor(this);
+
+        frame.setContentPane(new homepage());
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    private void searchinventoryIDActionPerformed(java.awt.event.ActionEvent evt) {
+
+        searchInventoryID();
+    }
+
+    private void refreshActionPerformed(java.awt.event.ActionEvent evt) {
+
+        loadInventoryTable();
 
         JOptionPane.showMessageDialog(
                 this,
-                "Error generating Inventory ID: "
-                        + ex.getMessage());
+                "All records are now displayed.");
     }
+
+    private void edittableActionPerformed(java.awt.event.ActionEvent evt) {
+
+        javax.swing.JFrame frame =
+                (javax.swing.JFrame)
+                        javax.swing.SwingUtilities
+                                .getWindowAncestor(this);
+
+        frame.setContentPane(new editinventory());
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    // Variables declaration - do not modify
+    private javax.swing.JButton back;
+    private javax.swing.JLabel bg;
+    private javax.swing.JButton edittable;
+    private javax.swing.JTable inventorytable;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JButton refresh;
+    private javax.swing.JButton save;
+    private javax.swing.JButton searchinventoryID;
+    // End of variables declaration
 }
