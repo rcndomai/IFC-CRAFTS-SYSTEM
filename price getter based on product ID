@@ -1,0 +1,59 @@
+public editorderitem() {
+        initComponents();
+        loadFonts();
+
+        if (customFont != null) {
+            oID.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+            opid.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+            qua.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+            priceao.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        }
+        
+        priceatorder.setEditable(true);
+
+        //// ito guys
+        productID.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { fetchProductPrice(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { fetchProductPrice(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { fetchProductPrice(); }
+        });
+    }
+
+    //// then ito
+    private void fetchProductPrice() {
+        String productIDText = productID.getText().trim();
+        if (productIDText.isEmpty() || productIDText.length() < 4) {
+            priceatorder.setText("");
+            return;
+        }
+
+        try {
+            int productIDValue = Integer.parseInt(productIDText);
+            
+            if (productIDValue < 2000 || productIDValue > 2999) {
+                priceatorder.setText("");
+                return;
+            }
+            String query = "SELECT unit_price FROM Products WHERE product_id = ?";
+            try (Connection conn = getConnection();
+                 PreparedStatement pst = conn.prepareStatement(query)) {
+                
+                pst.setInt(1, productIDValue);
+                try (ResultSet rs = pst.executeQuery()) {
+                    if (rs.next()) {
+                        double price = rs.getDouble("unit_price");
+                        priceatorder.setText(String.format("%.2f", price)); 
+                    } else {
+                        priceatorder.setText("Not Found");
+                    }
+                }
+            }
+        } catch (NumberFormatException e) {
+            priceatorder.setText(""); 
+        } catch (Exception e) {
+            priceatorder.setText("Error");
+        }
+    }
