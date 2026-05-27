@@ -1,342 +1,857 @@
-//delete
-private void deleteActionPerformed(java.awt.event.ActionEvent evt) {                                       
+import com.toedter.calendar.JDateChooser;
+import java.awt.FontFormatException;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import javax.swing.JOptionPane;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-    String idText =
-            shipmentID.getText().trim();
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
+ */
 
-    if (idText.isEmpty()) {
 
-        JOptionPane.showMessageDialog(
-                this,
-                "Enter Shipment ID first.");
+/**
+ *
+ * @author hezekiahmagalona
+ */
 
-        shipmentID.requestFocus();
-        return;
+public class editshipment extends javax.swing.JPanel {
+
+    private Connection conn;
+    private java.awt.Font customFont;
+
+    /**
+     * Creates new form customer
+     */
+    private Connection getConnection() throws Exception {
+
+        String url =
+                "jdbc:sqlserver://localhost:1433;"
+                + "databaseName=ifcdb;"
+                + "encrypt=true;"
+                + "trustServerCertificate=true";
+
+        String user = "sa";
+        String password = "Anolagam28";
+
+        return DriverManager.getConnection(
+                url,
+                user,
+                password
+        );
     }
 
-    try {
+    public editshipment() {
 
-        int shipmentId =
-                Integer.parseInt(idText);
+        initComponents();
 
-        Connection conn =
-                getConnection();
+        shipmentstatus.setUI(
+                new javax.swing.plaf.basic.BasicComboBoxUI()
+        );
 
-        String selectSql =
-                "SELECT order_id, shipment_date, " +
-                "delivery_mode, courier, shipment_status " +
-                "FROM dbo.Shipments " +
-                "WHERE shipment_id = ?";
+        shipmentstatus.setBackground(java.awt.Color.WHITE);
+        shipmentstatus.setForeground(java.awt.Color.BLACK);
 
-        PreparedStatement selectPst =
-                conn.prepareStatement(selectSql);
+        courier.setBackground(java.awt.Color.WHITE);
+        courier.setForeground(java.awt.Color.BLACK);
 
-        selectPst.setInt(1, shipmentId);
+        loadFonts();
 
-        java.sql.ResultSet rs =
-                selectPst.executeQuery();
+        pID.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        otid.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        shipdate.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        devmode.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        cour.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
+        shipstat.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
 
-        if (!rs.next()) {
+        try {
+
+            conn = getConnection();
+
+        } catch (Exception e) {
 
             JOptionPane.showMessageDialog(
                     this,
-                    "Shipment ID not found.");
-
-            rs.close();
-            selectPst.close();
-            conn.close();
-
-            return;
-        }
-
-        int currentOrderId =
-                rs.getInt("order_id");
-
-        java.sql.Date currentDate =
-                rs.getDate("shipment_date");
-
-        String currentMode =
-                rs.getString("delivery_mode");
-
-        String currentCourier =
-                rs.getString("courier");
-
-        String currentStatus =
-                rs.getString("shipment_status");
-
-        rs.close();
-        selectPst.close();
-
-        String message =
-                "Are you sure you want to delete this shipment record?\n\n"
-                + "Shipment Information:\n"
-                + "Shipment ID: " + shipmentId + "\n"
-                + "Order ID: " + currentOrderId + "\n"
-                + "Shipment Date: " + currentDate + "\n"
-                + "Delivery Mode: " + currentMode + "\n"
-                + "Courier: " + currentCourier + "\n"
-                + "Status: " + currentStatus;
-
-        int confirm =
-                JOptionPane.showConfirmDialog(
-                        this,
-                        message,
-                        "Confirm Delete",
-                        JOptionPane.YES_NO_OPTION
-                );
-
-        if (confirm != JOptionPane.YES_OPTION) {
-
-            conn.close();
-            return;
-        }
-
-        String deleteSql =
-                "DELETE FROM dbo.Shipments " +
-                "WHERE shipment_id = ?";
-
-        PreparedStatement deletePst =
-                conn.prepareStatement(deleteSql);
-
-        deletePst.setInt(1, shipmentId);
-
-        int rows =
-                deletePst.executeUpdate();
-
-        if (rows > 0) {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Shipment deleted successfully.");
-
-        } else {
-
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Delete failed.");
-        }
-
-        deletePst.close();
-        conn.close();
-
-    } catch (NumberFormatException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Shipment ID must be a number.");
-
-    } catch (java.sql.SQLException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error deleting record: "
-                        + ex.getMessage());
-
-    } catch (Exception ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error: "
-                        + ex.getMessage());
-    }
-}
-
-//clear
-private void clearActionPerformed(java.awt.event.ActionEvent evt) {                                      
-
-    int response =
-            JOptionPane.showConfirmDialog(
-                    this,
-                    "This will clear all your inputs. Continue?",
-                    "Confirm Clear",
-                    JOptionPane.YES_NO_OPTION);
-
-    if (response == JOptionPane.YES_OPTION) {
-
-        shipmentID.setText("");
-        orderID.setText("");
-        shipmentdate.setDate(null);
-        deliverymode.clearSelection();
-        courier.setText("");
-        shipmentstatus.setSelectedIndex(-1);
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Fields cleared successfully.");
-    }
-}
-//save
-private void saveActionPerformed(java.awt.event.ActionEvent evt) {                                     
-
-    String orderIDText =
-            orderID.getText().trim();
-
-    java.util.Date utilDate =
-            shipmentdate.getDate();
-
-    String courier =
-            courier.getText().trim();
-
-    String shipmentstatus =
-            (shipmentstatus.getSelectedIndex() == -1)
-            ? null
-            : shipmentstatus.getSelectedItem()
-                    .toString();
-
-    String deliverymode = null;
-
-    java.util.Enumeration<javax.swing.AbstractButton>
-            buttons =
-            deliverymode.getElements();
-
-    while (buttons.hasMoreElements()) {
-
-        javax.swing.AbstractButton button =
-                buttons.nextElement();
-
-        if (button.isSelected()) {
-
-            deliverymode =
-                    button.getText();
-
-            break;
-        }
-    }
-
-    if (orderIdText.isEmpty()
-            || utilDate == null
-            || deliverymode == null
-            || shipmentstatus == null) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Please fill in all required fields.");
-
-        return;
-    }
-
-    try {
-
-        int orderID =
-                Integer.parseInt(orderIdText);
-
-        java.sql.Date sqlDate =
-                new java.sql.Date(
-                        utilDate.getTime());
-
-        String message =
-                "Are you sure you want to save this shipment record?\n\n"
-                + "Shipment Information:\n"
-                + "Order ID: " + orderID + "\n"
-                + "Shipment Date: " + shipmentdate + "\n"
-                + "Delivery Mode: " + deliverymode + "\n"
-                + "Courier: " + courier + "\n"
-                + "Status: " + shipmentstatus;
-
-        int confirm =
-                JOptionPane.showConfirmDialog(
-                        this,
-                        message,
-                        "Confirm Save",
-                        JOptionPane.YES_NO_OPTION
-                );
-
-        if (confirm != JOptionPane.YES_OPTION) {
-
-            return;
-        }
-
-        String sql =
-                "INSERT INTO dbo.Shipments " +
-                "(order_id, shipment_date, " +
-                "delivery_mode, courier, shipment_status) " +
-                "VALUES (?, ?, ?, ?, ?)";
-
-        Connection conn =
-                getConnection();
-
-        PreparedStatement pst =
-                conn.prepareStatement(sql);
-
-        pst.setInt(1, orderID);
-        pst.setDate(2, shipmentdate);
-        pst.setString(3, deliverymode);
-        pst.setString(4, courier);
-        pst.setString(5, shipmentstatus);
-
-        pst.executeUpdate();
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Shipment saved successfully.");
-
-        orderID.setText("");
-        shipmentdate.setDate(null);
-        deliverymode.clearSelection();
-        courier.setText("");
-        shipmentstatus.setSelectedIndex(-1);
-
-        generateShipmentId();
-
-        pst.close();
-        conn.close();
-
-    } catch (NumberFormatException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Order ID must be a whole number.");
-
-    } catch (java.sql.SQLException ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error: "
-                        + ex.getMessage());
-
-    } catch (Exception ex) {
-
-        JOptionPane.showMessageDialog(
-                this,
-                "Error: "
-                        + ex.getMessage());
-    }
-}
-
-//auto-gen id
-private void generateShipmentId() {
-
-    String sql =
-        "SELECT ISNULL(MAX(shipment_id), 4999) + 1 AS next_id " +
-        "FROM dbo.Shipments";
-
-    try {
-
-        PreparedStatement pst =
-                conn.prepareStatement(sql);
-
-        java.sql.ResultSet rs =
-                pst.executeQuery();
-
-        if (rs.next()) {
-
-            shipmentID.setText(
-                    String.valueOf(
-                            rs.getInt("next_id"))
+                    "Database connection failed: "
+                    + e.getMessage()
             );
 
-            shipmentID.setEditable(true);
-            shipmentID.setFocusable(true);
+            return;
         }
 
-        rs.close();
-        pst.close();
+        generateShipmentId();
+    }
 
-    } catch (java.sql.SQLException ex) {
+    @SuppressWarnings("unchecked")
+    private void initComponents() {
 
-        JOptionPane.showMessageDialog(
-                this,
-                "Error generating Shipment ID: "
-                        + ex.getMessage());
+        deliverymode = new javax.swing.ButtonGroup();
+
+        shipmentstatus = new javax.swing.JComboBox<>();
+        courier = new javax.swing.JTextField();
+
+        meetup = new javax.swing.JRadioButton();
+        delivery = new javax.swing.JRadioButton();
+        pickup = new javax.swing.JRadioButton();
+
+        shipmentdate = new JDateChooser();
+
+        orderID = new javax.swing.JTextField();
+        shipmentID = new javax.swing.JTextField();
+
+        clear = new javax.swing.JButton();
+        save = new javax.swing.JButton();
+        backtotable = new javax.swing.JButton();
+        delete = new javax.swing.JButton();
+
+        jLabel1 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+
+        otid = new javax.swing.JLabel();
+        shipdate = new javax.swing.JLabel();
+        cour = new javax.swing.JLabel();
+        shipstat = new javax.swing.JLabel();
+        devmode = new javax.swing.JLabel();
+        pID = new javax.swing.JLabel();
+
+        mainbg = new javax.swing.JLabel();
+
+        setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        shipmentstatus.setFont(
+                new java.awt.Font("Kokonor", 0, 24)
+        );
+
+        shipmentstatus.setModel(
+                new javax.swing.DefaultComboBoxModel<>(
+                        new String[]{
+                            "In Transit",
+                            "Delivered",
+                            "Failed"
+                        }
+                )
+        );
+
+        shipmentstatus.setSelectedIndex(-1);
+
+        add(
+                shipmentstatus,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        560,
+                        560,
+                        380,
+                        50
+                )
+        );
+
+        courier.setBackground(java.awt.Color.WHITE);
+
+        courier.setFont(
+                new java.awt.Font("Baskerville", 0, 24)
+        );
+
+        courier.setForeground(java.awt.Color.BLACK);
+        courier.setBorder(null);
+
+        add(
+                courier,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        560,
+                        480,
+                        370,
+                        50
+                )
+        );
+
+        deliverymode.add(delivery);
+
+        delivery.setFont(
+                new java.awt.Font("Kokonor", 0, 24)
+        );
+
+        delivery.setForeground(java.awt.Color.WHITE);
+        delivery.setText("Delivery");
+
+        add(
+                delivery,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        550,
+                        390,
+                        -1,
+                        60
+                )
+        );
+
+        deliverymode.add(pickup);
+
+        pickup.setFont(
+                new java.awt.Font("Kokonor", 0, 24)
+        );
+
+        pickup.setForeground(java.awt.Color.WHITE);
+        pickup.setText("Pick Up");
+
+        add(
+                pickup,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        690,
+                        390,
+                        -1,
+                        60
+                )
+        );
+
+        deliverymode.add(meetup);
+
+        meetup.setFont(
+                new java.awt.Font("Kokonor", 0, 24)
+        );
+
+        meetup.setForeground(java.awt.Color.WHITE);
+        meetup.setText("Meet Up");
+
+        add(
+                meetup,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        840,
+                        390,
+                        -1,
+                        60
+                )
+        );
+
+        shipmentdate.setDateFormatString("yyyy-MM-dd");
+
+        shipmentdate.setFont(
+                new java.awt.Font("Baskerville", 0, 24)
+        );
+
+        add(
+                shipmentdate,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        560,
+                        320,
+                        370,
+                        50
+                )
+        );
+
+        orderID.setBackground(java.awt.Color.WHITE);
+
+        orderID.setFont(
+                new java.awt.Font("Baskerville", 0, 24)
+        );
+
+        orderID.setForeground(java.awt.Color.BLACK);
+        orderID.setBorder(null);
+
+        add(
+                orderID,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        560,
+                        240,
+                        370,
+                        50
+                )
+        );
+
+        shipmentID.setBackground(java.awt.Color.WHITE);
+
+        shipmentID.setFont(
+                new java.awt.Font("Baskerville", 0, 24)
+        );
+
+        shipmentID.setForeground(java.awt.Color.BLACK);
+        shipmentID.setBorder(null);
+        shipmentID.setEditable(false);
+
+        add(
+                shipmentID,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        560,
+                        160,
+                        370,
+                        50
+                )
+        );
+
+        clear.setFont(
+                new java.awt.Font("Kokonor", 0, 18)
+        );
+
+        clear.setText("Clear");
+
+        clear.addActionListener(
+                this::clearActionPerformed
+        );
+
+        add(
+                clear,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        720,
+                        670,
+                        120,
+                        40
+                )
+        );
+
+        save.setFont(
+                new java.awt.Font("Kokonor", 0, 18)
+        );
+
+        save.setText("Save");
+
+        save.addActionListener(
+                this::saveActionPerformed
+        );
+
+        add(
+                save,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        890,
+                        670,
+                        120,
+                        40
+                )
+        );
+
+        backtotable.setFont(
+                new java.awt.Font("Kokonor", 0, 18)
+        );
+
+        backtotable.setText("Back to Table");
+
+        backtotable.addActionListener(
+                this::backtotableActionPerformed
+        );
+
+        add(
+                backtotable,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        330,
+                        670,
+                        150,
+                        40
+                )
+        );
+
+        delete.setFont(
+                new java.awt.Font("Kokonor", 0, 18)
+        );
+
+        delete.setText("Delete");
+
+        delete.addActionListener(
+                this::deleteActionPerformed
+        );
+
+        add(
+                delete,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        540,
+                        670,
+                        120,
+                        40
+                )
+        );
+
+        jLabel1.setIcon(
+                new javax.swing.ImageIcon(
+                        getClass().getResource(
+                                "/ifccrafts/assets/tfield.png"
+                        )
+                )
+        );
+
+        add(
+                jLabel1,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        540,
+                        230,
+                        -1,
+                        70
+                )
+        );
+
+        jLabel3.setIcon(
+                new javax.swing.ImageIcon(
+                        getClass().getResource(
+                                "/ifccrafts/assets/tfield.png"
+                        )
+                )
+        );
+
+        add(
+                jLabel3,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        540,
+                        550,
+                        -1,
+                        70
+                )
+        );
+
+        jLabel4.setIcon(
+                new javax.swing.ImageIcon(
+                        getClass().getResource(
+                                "/ifccrafts/assets/tfield.png"
+                        )
+                )
+        );
+
+        add(
+                jLabel4,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        540,
+                        310,
+                        -1,
+                        70
+                )
+        );
+
+        jLabel5.setIcon(
+                new javax.swing.ImageIcon(
+                        getClass().getResource(
+                                "/ifccrafts/assets/tfield.png"
+                        )
+                )
+        );
+
+        add(
+                jLabel5,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        540,
+                        470,
+                        -1,
+                        70
+                )
+        );
+
+        pID.setForeground(java.awt.Color.WHITE);
+        pID.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        pID.setText("Shipment ID:");
+
+        add(
+                pID,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        290,
+                        160,
+                        210,
+                        50
+                )
+        );
+
+        otid.setForeground(java.awt.Color.WHITE);
+        otid.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        otid.setText("Order ID:");
+
+        add(
+                otid,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        320,
+                        240,
+                        180,
+                        50
+                )
+        );
+
+        shipdate.setForeground(java.awt.Color.WHITE);
+        shipdate.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        shipdate.setText("Shipment Date:");
+
+        add(
+                shipdate,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        210,
+                        320,
+                        290,
+                        50
+                )
+        );
+
+        devmode.setForeground(java.awt.Color.WHITE);
+        devmode.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        devmode.setText("Delivery Mode:");
+
+        add(
+                devmode,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        260,
+                        400,
+                        240,
+                        50
+                )
+        );
+
+        cour.setForeground(java.awt.Color.WHITE);
+        cour.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        cour.setText("Courier:");
+
+        add(
+                cour,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        260,
+                        480,
+                        240,
+                        50
+                )
+        );
+
+        shipstat.setForeground(java.awt.Color.WHITE);
+        shipstat.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        shipstat.setText("Shipment Status:");
+
+        add(
+                shipstat,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        220,
+                        560,
+                        280,
+                        50
+                )
+        );
+
+        mainbg.setIcon(
+                new javax.swing.ImageIcon(
+                        getClass().getResource(
+                                "/ifccrafts/assets/mainbg.png"
+                        )
+                )
+        );
+
+        add(
+                mainbg,
+                new org.netbeans.lib.awtextra.AbsoluteConstraints(
+                        0,
+                        0,
+                        1300,
+                        -1
+                )
+        );
+    }
+
+    private void generateShipmentId() {
+
+        String sql =
+                "SELECT ISNULL(MAX(shipment_id), 4999) + 1 AS next_id "
+                + "FROM dbo.Shipments";
+
+        try {
+
+            PreparedStatement pst =
+                    conn.prepareStatement(sql);
+
+            ResultSet rs =
+                    pst.executeQuery();
+
+            if (rs.next()) {
+
+                shipmentID.setText(
+                        String.valueOf(
+                                rs.getInt("next_id")
+                        )
+                );
+            }
+
+            rs.close();
+            pst.close();
+
+        } catch (SQLException ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error generating Shipment ID: "
+                    + ex.getMessage()
+            );
+        }
+    }
+
+    private void deleteActionPerformed(
+            java.awt.event.ActionEvent evt
+    ) {
+
+        String idText =
+                shipmentID.getText().trim();
+
+        if (idText.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Enter Shipment ID first."
+            );
+
+            return;
+        }
+
+        try {
+
+            int shipmentId =
+                    Integer.parseInt(idText);
+
+            String sql =
+                    "DELETE FROM dbo.Shipments "
+                    + "WHERE shipment_id = ?";
+
+            PreparedStatement pst =
+                    conn.prepareStatement(sql);
+
+            pst.setInt(1, shipmentId);
+
+            int rows =
+                    pst.executeUpdate();
+
+            if (rows > 0) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Shipment deleted successfully."
+                );
+
+            } else {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Shipment ID not found."
+                );
+            }
+
+            pst.close();
+
+            generateShipmentId();
+
+        } catch (Exception ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error: "
+                    + ex.getMessage()
+            );
+        }
+    }
+
+    private void clearActionPerformed(
+            java.awt.event.ActionEvent evt
+    ) {
+
+        int response =
+                JOptionPane.showConfirmDialog(
+                        this,
+                        "This will clear all your inputs. Continue?",
+                        "Confirm Clear",
+                        JOptionPane.YES_NO_OPTION
+                );
+
+        if (response == JOptionPane.YES_OPTION) {
+
+            orderID.setText("");
+
+            shipmentdate.setDate(null);
+
+            deliverymode.clearSelection();
+
+            courier.setText("");
+
+            shipmentstatus.setSelectedIndex(-1);
+
+            generateShipmentId();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Fields cleared successfully."
+            );
+        }
+    }
+
+    private void saveActionPerformed(
+            java.awt.event.ActionEvent evt
+    ) {
+
+        String orderIDText =
+                orderID.getText().trim();
+
+        java.util.Date utilDate =
+                shipmentdate.getDate();
+
+        String courierText =
+                courier.getText().trim();
+
+        String shipmentStatusText =
+                (shipmentstatus.getSelectedIndex() == -1)
+                ? null
+                : shipmentstatus.getSelectedItem().toString();
+
+        String deliveryModeText = null;
+
+        java.util.Enumeration<javax.swing.AbstractButton>
+                buttons =
+                deliverymode.getElements();
+
+        while (buttons.hasMoreElements()) {
+
+            javax.swing.AbstractButton button =
+                    buttons.nextElement();
+
+            if (button.isSelected()) {
+
+                deliveryModeText =
+                        button.getText();
+
+                break;
+            }
+        }
+
+        if (orderIDText.isEmpty()
+                || utilDate == null
+                || deliveryModeText == null
+                || shipmentStatusText == null
+                || courierText.isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Please fill in all required fields."
+            );
+
+            return;
+        }
+
+        try {
+
+            int orderId =
+                    Integer.parseInt(orderIDText);
+
+            java.sql.Date sqlDate =
+                    new java.sql.Date(
+                            utilDate.getTime()
+                    );
+
+            String sql =
+                    "INSERT INTO dbo.Shipments "
+                    + "(order_id, shipment_date, "
+                    + "delivery_mode, courier, shipment_status) "
+                    + "VALUES (?, ?, ?, ?, ?)";
+
+            PreparedStatement pst =
+                    conn.prepareStatement(sql);
+
+            pst.setInt(1, orderId);
+            pst.setDate(2, sqlDate);
+            pst.setString(3, deliveryModeText);
+            pst.setString(4, courierText);
+            pst.setString(5, shipmentStatusText);
+
+            pst.executeUpdate();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Shipment saved successfully."
+            );
+
+            orderID.setText("");
+
+            shipmentdate.setDate(null);
+
+            deliverymode.clearSelection();
+
+            courier.setText("");
+
+            shipmentstatus.setSelectedIndex(-1);
+
+            generateShipmentId();
+
+            pst.close();
+
+        } catch (NumberFormatException ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Order ID must be a whole number."
+            );
+
+        } catch (SQLException ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error: "
+                    + ex.getMessage()
+            );
+
+        } catch (Exception ex) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Error: "
+                    + ex.getMessage()
+            );
+        }
+    }
+
+    private void backtotableActionPerformed(
+            java.awt.event.ActionEvent evt
+    ) {
+
+        javax.swing.JFrame frame =
+                (javax.swing.JFrame)
+                javax.swing.SwingUtilities
+                        .getWindowAncestor(this);
+
+        frame.setContentPane(new shipments());
+
+        frame.revalidate();
+        frame.repaint();
+    }
+
+    // VARIABLES
+    private javax.swing.JButton backtotable;
+    private javax.swing.JButton clear;
+    private javax.swing.JLabel cour;
+    private javax.swing.JTextField courier;
+    private javax.swing.JButton delete;
+    private javax.swing.JRadioButton delivery;
+    private javax.swing.ButtonGroup deliverymode;
+    private javax.swing.JLabel devmode;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel mainbg;
+    private javax.swing.JRadioButton meetup;
+    private javax.swing.JTextField orderID;
+    private javax.swing.JLabel otid;
+    private javax.swing.JLabel pID;
+    private javax.swing.JRadioButton pickup;
+    private javax.swing.JButton save;
+    private javax.swing.JLabel shipdate;
+    private javax.swing.JTextField shipmentID;
+    private JDateChooser shipmentdate;
+    private javax.swing.JComboBox<String> shipmentstatus;
+    private javax.swing.JLabel shipstat;
+
+    private void loadFonts() {
+
+        try {
+
+            customFont =
+                    java.awt.Font.createFont(
+                            java.awt.Font.TRUETYPE_FONT,
+                            getClass().getResourceAsStream(
+                                    "/ifccrafts/assets/MyFont.ttf"
+                            )
+                    );
+
+        } catch (FontFormatException | IOException e) {
+
+            customFont =
+                    new java.awt.Font(
+                            "Serif",
+                            java.awt.Font.PLAIN,
+                            18
+                    );
+        }
     }
 }
