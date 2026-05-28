@@ -28,13 +28,20 @@ public class dashboard extends javax.swing.JPanel {
      * Creates new form customer
      */
     private Connection conn;
+    private JLabel dateDisplayLabel;
     public dashboard() {
         initComponents();
         DB_connect();
+        new JFXPanel();
         addPieChart();           
         loadSales();             
         loadProfit();            
 
+        dateDisplayLabel = new JLabel("All Time");
+        dateDisplayLabel.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 18));
+        dateDisplayLabel.setForeground(java.awt.Color.WHITE);
+
+        this.add(dateDisplayLabel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 160, 300, 40));
     }
     private void DB_connect() {
         try {
@@ -166,7 +173,7 @@ public class dashboard extends javax.swing.JPanel {
     private void bestsellerReload() {
         bestsellingitems_container.removeAll();               
         bestsellingitems_container.revalidate(); 
-        bestsellingitems_container.repaint();   
+        bestsellingitems_container.repaint();
      
         addPieChart();
     }
@@ -176,7 +183,7 @@ public class dashboard extends javax.swing.JPanel {
             String sql =
                 "SELECT SUM(amount) AS totalSales " +
                 "FROM Payments " +
-                "WHERE payment_status='PAID' " +
+                "WHERE payment_status='Paid' " +
                 "AND EXTRACT(MONTH FROM date_paid) = ? " +
                 "AND EXTRACT(YEAR FROM date_paid) = ?";
 
@@ -210,7 +217,7 @@ public class dashboard extends javax.swing.JPanel {
             String salesSQL =
                 "SELECT SUM(amount) AS totalSales " +
                 "FROM Payments " +
-                "WHERE payment_status='PAID' " +
+                "WHERE payment_status='Paid' " +
                 "AND EXTRACT(MONTH FROM date_paid)=? " +
                 "AND EXTRACT(YEAR FROM date_paid)=?";
 
@@ -226,9 +233,12 @@ public class dashboard extends javax.swing.JPanel {
             }
 
             // EXPENSE
-            String expSQL = "SELECT SUM(price) AS totalExpense FROM Inventory";
+
+            String expSQL = "SELECT SUM(material_cost) AS totalExpense FROM Inventory";
+
             PreparedStatement pst2 = conn.prepareStatement(expSQL);
             ResultSet rs2 = pst2.executeQuery();
+
 
             double expense = 0;
             if (rs2.next()) {
@@ -398,6 +408,7 @@ public class dashboard extends javax.swing.JPanel {
         bestsellerReload();
         loadSales();
         loadProfit();
+        dateDisplayLabel.setText("All Time");
 
         JOptionPane.showMessageDialog(this, "Dashboard refreshed!");
     }                                       
@@ -411,10 +422,17 @@ public class dashboard extends javax.swing.JPanel {
 
             int month = Integer.parseInt(monthInput);
             int year = Integer.parseInt(yearInput);
+            
+            
+            String monthName = new java.text.DateFormatSymbols().getMonths()[month - 1];
+            dateDisplayLabel.setText("for " + monthName + " " + year);
+
 
             loadSalesByDate(month, year);
             loadProfitByDate(month, year);
             loadBestSellingByDate(month, year);
+            
+            
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Invalid input.");
