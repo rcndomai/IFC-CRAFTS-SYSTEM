@@ -9,7 +9,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-
 import javax.swing.JLabel;
 
 
@@ -31,7 +30,7 @@ public class dashboard extends javax.swing.JPanel {
     private Connection conn;
     public dashboard() {
         initComponents();
-        DB_connect();           
+        DB_connect();
         addPieChart();           
         loadSales();             
         loadProfit();            
@@ -51,9 +50,10 @@ public class dashboard extends javax.swing.JPanel {
     }
 
     private void addPieChart() {
-        JFXPanel fxPanel = new JFXPanel();
 
-        bestsellingitems_container.setLayout(new BorderLayout());
+        bestsellingitems_container.removeAll();
+
+        JFXPanel fxPanel = new JFXPanel();
         bestsellingitems_container.add(fxPanel, BorderLayout.CENTER);
 
         Platform.runLater(() -> {
@@ -61,22 +61,20 @@ public class dashboard extends javax.swing.JPanel {
             PieChart pieChart = new PieChart();
 
             try {
-
                 String sql =
                     "SELECT product_id, SUM(quantity) AS total_qty " +
                     "FROM Order_Items " +
-                    "GROUP BY product_id " +
-                    "ORDER BY total_qty DESC";
+                    "GROUP BY product_id";
 
                 PreparedStatement pst = conn.prepareStatement(sql);
                 ResultSet rs = pst.executeQuery();
 
                 while (rs.next()) {
-                    int productId = rs.getInt("product_id");
-                    int qty = rs.getInt("total_qty");
-
                     pieChart.getData().add(
-                        new PieChart.Data("Product " + productId, qty)
+                        new PieChart.Data(
+                            "Product " + rs.getInt("product_id"),
+                            rs.getInt("total_qty")
+                        )
                     );
                 }
 
@@ -84,17 +82,12 @@ public class dashboard extends javax.swing.JPanel {
                 e.printStackTrace();
             }
 
-            VBox chartCard = new VBox(pieChart);
-            chartCard.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-padding: 20;" +
-                "-fx-border-color: black;" +
-                "-fx-border-width: 3;"
-            );
-
-            fxPanel.setScene(new Scene(chartCard));
+            fxPanel.setScene(new Scene(new VBox(pieChart)));
         });
-    }  
+ 
+        bestsellingitems_container.revalidate();
+        bestsellingitems_container.repaint();
+    }
     private void loadSales() {
         try {
 
@@ -171,7 +164,10 @@ public class dashboard extends javax.swing.JPanel {
 
     
     private void bestsellerReload() {
-        bestsellingitems_container.removeAll();
+        bestsellingitems_container.removeAll();               
+        bestsellingitems_container.revalidate(); 
+        bestsellingitems_container.repaint();   
+     
         addPieChart();
     }
     private void loadSalesByDate(int month, int year) {
@@ -404,28 +400,25 @@ public class dashboard extends javax.swing.JPanel {
         loadProfit();
 
         JOptionPane.showMessageDialog(this, "Dashboard refreshed!");
-
     }                                       
 
     private void searchdateActionPerformed(java.awt.event.ActionEvent evt) {                                           
-    try {
-        String monthInput = JOptionPane.showInputDialog(this, "Enter Month (1-12):");
-        String yearInput = JOptionPane.showInputDialog(this, "Enter Year (e.g. 2026):");
+        try {
+            String monthInput = JOptionPane.showInputDialog(this, "Enter Month (1-12):");
+            String yearInput = JOptionPane.showInputDialog(this, "Enter Year (e.g. 2026):");
 
-        if (monthInput == null || yearInput == null) return;
+            if (monthInput == null || yearInput == null) return;
 
-        int month = Integer.parseInt(monthInput);
-        int year = Integer.parseInt(yearInput);
+            int month = Integer.parseInt(monthInput);
+            int year = Integer.parseInt(yearInput);
 
-        loadSalesByDate(month, year);
-        loadProfitByDate(month, year);
-        loadBestSellingByDate(month, year);
+            loadSalesByDate(month, year);
+            loadProfitByDate(month, year);
+            loadBestSellingByDate(month, year);
 
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Invalid input.");
-    }
-
-
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Invalid input.");
+        }
     }                                          
 
 
