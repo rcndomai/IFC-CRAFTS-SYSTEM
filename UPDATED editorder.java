@@ -10,6 +10,9 @@ public class editorder extends javax.swing.JPanel {
         initComponents();
         loadFonts();
         
+         loadCustomerIDs(); 
+         loadAffiliateIDs();
+        
         ((javax.swing.JTextField) orderdateDateChooser.getDateEditor().getUiComponent()).setEditable(false);
         ((javax.swing.JTextField) duedateDateChooser.getDateEditor().getUiComponent()).setEditable(false);
 
@@ -23,12 +26,59 @@ public class editorder extends javax.swing.JPanel {
         generateNextOrderID();
     }
 
+    private void loadCustomerIDs() {
+    try {
+        java.sql.Connection conn = IFCDatabase.getConnection();
+
+        String sql = "SELECT customer_id FROM Customers ORDER BY customer_id";
+        java.sql.PreparedStatement pst = conn.prepareStatement(sql);
+        java.sql.ResultSet rs = pst.executeQuery();
+
+        customerid.removeAllItems();
+
+        while (rs.next()) {
+            customerid.addItem(String.valueOf(rs.getInt("customer_id")));
+        }
+
+        rs.close();
+        pst.close();
+        conn.close();
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Failed to load customers: " + e.getMessage());
+    }
+}
+    private void loadAffiliateIDs() {
+    try {
+        java.sql.Connection conn = IFCDatabase.getConnection();
+
+        String sql = "SELECT affiliate_id FROM Affiliates ORDER BY affiliate_id";
+        java.sql.PreparedStatement pst = conn.prepareStatement(sql);
+        java.sql.ResultSet rs = pst.executeQuery();
+
+        affiliateid.removeAllItems();
+
+        // Optional: allow empty selection
+        affiliateid.addItem(""); 
+
+        while (rs.next()) {
+            affiliateid.addItem(String.valueOf(rs.getInt("affiliate_id")));
+        }
+
+        rs.close();
+        pst.close();
+        conn.close();
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Failed to load affiliates: " + e.getMessage());
+    }
+}
+    
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
     private void initComponents() {
 
         progress = new javax.swing.ButtonGroup();
-        customerID = new javax.swing.JTextField();
         orderID = new javax.swing.JTextField();
         clear = new javax.swing.JButton();
         duedateDateChooser = new com.toedter.calendar.JDateChooser();
@@ -36,28 +86,25 @@ public class editorder extends javax.swing.JPanel {
         backtotable = new javax.swing.JButton();
         delete = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
-        producttype = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         odate = new javax.swing.JLabel();
         oduedate = new javax.swing.JLabel();
         ocID = new javax.swing.JLabel();
         oID = new javax.swing.JLabel();
         ostat = new javax.swing.JLabel();
-        affiliateID = new javax.swing.JTextField();
         oaID = new javax.swing.JLabel();
-        producttype1 = new javax.swing.JLabel();
         done = new javax.swing.JRadioButton();
         notstarted = new javax.swing.JRadioButton();
         inprogress = new javax.swing.JRadioButton();
         orderdateDateChooser = new com.toedter.calendar.JDateChooser();
         jLabel1 = new javax.swing.JLabel();
+        customerid = new javax.swing.JComboBox<>();
+        producttype = new javax.swing.JLabel();
+        affiliateid = new javax.swing.JComboBox<>();
+        producttype1 = new javax.swing.JLabel();
         mainbg = new javax.swing.JLabel();
 
         setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-
-        customerID.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
-        customerID.setBorder(null);
-        add(customerID, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 480, 370, 50));
 
         orderID.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
         orderID.setBorder(null);
@@ -88,10 +135,6 @@ public class editorder extends javax.swing.JPanel {
         jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
         add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 310, -1, 70));
-
-        producttype.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        producttype.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
-        add(producttype, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 470, -1, 70));
 
         jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
@@ -127,19 +170,11 @@ public class editorder extends javax.swing.JPanel {
         ostat.setText("Order Status:");
         add(ostat, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 400, 240, 50));
 
-        affiliateID.setFont(new java.awt.Font("Baskerville", 0, 24)); // NOI18N
-        affiliateID.setBorder(null);
-        add(affiliateID, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 560, 370, 50));
-
         oaID.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
         oaID.setForeground(new java.awt.Color(255, 255, 255));
         oaID.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         oaID.setText("Affiliate ID:");
         add(oaID, new org.netbeans.lib.awtextra.AbsoluteConstraints(260, 560, 240, 50));
-
-        producttype1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        producttype1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
-        add(producttype1, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 550, -1, 70));
 
         progress.add(done);
         done.setFont(new java.awt.Font("Kokonor", 0, 24)); // NOI18N
@@ -167,6 +202,20 @@ public class editorder extends javax.swing.JPanel {
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
         add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 230, -1, 70));
 
+        customerid.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        add(customerid, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 480, 370, 50));
+
+        producttype.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        producttype.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
+        add(producttype, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 470, -1, 70));
+
+        affiliateid.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        add(affiliateid, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 560, 370, 50));
+
+        producttype1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        producttype1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/tfield.png"))); // NOI18N
+        add(producttype1, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 550, -1, 70));
+
         mainbg.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/mainbg.png"))); // NOI18N
         add(mainbg, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1300, -1));
     }// </editor-fold>                        
@@ -182,8 +231,8 @@ public class editorder extends javax.swing.JPanel {
             if (orderdateDateChooser.getDate() != null
             || duedateDateChooser.getDate() != null
             || progress.getSelection() != null
-            || !customerID.getText().trim().isEmpty()
-            || !affiliateID.getText().trim().isEmpty()) {
+            || customerid.getSelectedItem() != null
+            || affiliateid.getSelectedItem() != null) {
 
                 JOptionPane.showMessageDialog(this,"Only Order ID should have a value when deleting.");
                 return;
@@ -264,8 +313,16 @@ public class editorder extends javax.swing.JPanel {
             orderdateDateChooser.setDate(null);
             duedateDateChooser.setDate(null);
             progress.clearSelection();
-            customerID.setText("");
-            affiliateID.setText("");
+            if (customerid.getItemCount() > 0) {
+                customerid.setSelectedIndex(0); // resets to first item
+            } else {
+                customerid.setSelectedIndex(-1);
+            }
+            if (affiliateid.getItemCount() > 0) {
+                affiliateid.setSelectedIndex(0); // empty item
+            } else {
+                affiliateid.setSelectedIndex(-1);
+            }
 
             JOptionPane.showMessageDialog(this, "Fields cleared successfully.");
         }
@@ -276,8 +333,14 @@ public class editorder extends javax.swing.JPanel {
         java.sql.Connection conn = IFCDatabase.getConnection();
 
         String orderIDText = orderID.getText().trim();
-        String customerIDText = customerID.getText().trim();
-        String affiliateIDText = affiliateID.getText().trim();
+        String customerIDText = (String) customerid.getSelectedItem();
+        
+        String affiliateIDText = (String) affiliateid.getSelectedItem();
+
+            if (affiliateIDText != null && affiliateIDText.isEmpty()) {
+                affiliateIDText = null;
+            }
+            
         java.util.Date orderDateValue = orderdateDateChooser.getDate();
         java.util.Date dueDateValue = duedateDateChooser.getDate();
         String progressStatus = "";
@@ -311,7 +374,7 @@ public class editorder extends javax.swing.JPanel {
         try {
             customerIDValue = Integer.parseInt(customerIDText);
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this,"Customer ID must be a number.");
+            JOptionPane.showMessageDialog(this, "Customer ID must be a number.");
             return;
         }
 
@@ -326,7 +389,7 @@ public class editorder extends javax.swing.JPanel {
             return;
         }
 
-        if (!affiliateIDText.isEmpty()) {
+        if (affiliateIDText != null && !affiliateIDText.isEmpty()) {
             java.sql.PreparedStatement checkAffiliate =
                     conn.prepareStatement(
                             "SELECT * FROM Affiliates WHERE affiliate_id = ?"
@@ -441,8 +504,16 @@ public class editorder extends javax.swing.JPanel {
             
             // Clear text fields
             orderID.setText("");
-            customerID.setText("");
-            affiliateID.setText("");
+            if (customerid.getItemCount() > 0) {
+                customerid.setSelectedIndex(0); // resets to first item
+            } else {
+                customerid.setSelectedIndex(-1);
+            }
+            if (affiliateid.getItemCount() > 0) {
+                affiliateid.setSelectedIndex(0); // empty item
+            } else {
+                affiliateid.setSelectedIndex(-1);
+            }
 
             // Clear date choosers
             orderdateDateChooser.setDate(null);
@@ -492,10 +563,10 @@ public class editorder extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify                     
-    private javax.swing.JTextField affiliateID;
+    private javax.swing.JComboBox<String> affiliateid;
     private javax.swing.JButton backtotable;
     private javax.swing.JButton clear;
-    private javax.swing.JTextField customerID;
+    private javax.swing.JComboBox<String> customerid;
     private javax.swing.JButton delete;
     private javax.swing.JRadioButton done;
     private com.toedter.calendar.JDateChooser duedateDateChooser;
