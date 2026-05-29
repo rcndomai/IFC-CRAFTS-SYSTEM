@@ -245,6 +245,7 @@ public class editorder extends javax.swing.JPanel {
 
             if (rowsDeleted > 0) {
                 JOptionPane.showMessageDialog(this,"Order deleted successfully!");
+                orderID.setText("");
         } else {
             JOptionPane.showMessageDialog(this,"Delete failed.");
         }
@@ -437,6 +438,18 @@ public class editorder extends javax.swing.JPanel {
                 finalOrderID = String.valueOf(idRS.getInt("latest_id"));
             }
         }
+            
+            // Clear text fields
+            orderID.setText("");
+            customerID.setText("");
+            affiliateID.setText("");
+
+            // Clear date choosers
+            orderdateDateChooser.setDate(null);
+            duedateDateChooser.setDate(null);
+
+            // Clear radio buttons
+            progress.clearSelection();
 
         javax.swing.JFrame frame =(javax.swing.JFrame)
         javax.swing.SwingUtilities.getWindowAncestor(this);
