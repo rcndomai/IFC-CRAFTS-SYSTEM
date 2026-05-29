@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import java.awt.Component;
+import com.toedter.calendar.JDateChooser;
 
 public class transactions extends javax.swing.JPanel {
    private Integer[] originalIds;
@@ -24,6 +25,17 @@ public class transactions extends javax.swing.JPanel {
         }
     }
     
+    private void centerAlignTransactionTable() {
+        javax.swing.table.DefaultTableCellRenderer centerRenderer =
+                new javax.swing.table.DefaultTableCellRenderer();
+
+        centerRenderer.setHorizontalAlignment(javax.swing.JLabel.CENTER);
+
+        for (int i = 0; i < transactiontable.getColumnCount(); i++) {
+            transactiontable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+    }
+    
     private void loadTransactionTable() {
         try {
             String sql = "SELECT * FROM Payments ORDER BY payment_id";
@@ -36,8 +48,8 @@ public class transactions extends javax.swing.JPanel {
                 
             @Override
             public boolean isCellEditable(int row, int column) {
-            // Payment ID column NOT editable
-                if (column == 0) {
+            // Payment ID, Order ID, Payment Status, and Date Paid column NOT editable
+                if (column == 0 || column == 1 || column == 2) {
                     return false;
                 }
                     return true;
@@ -80,6 +92,22 @@ public class transactions extends javax.swing.JPanel {
         transactiontable.setModel(model);
 
         customizeTransactionTable();
+        
+        // Payment Method COMBOBOX
+        String[] pay_method = {
+            "Cash",
+            "Gcash",
+            "Others"
+        };
+
+        // DATE EDITOR
+        transactiontable.getColumnModel().getColumn(3)
+                .setCellEditor(new DateCellEditor());
+        
+        JComboBox<String> comboBox = new JComboBox<>(pay_method);
+
+        transactiontable.getColumnModel().getColumn(4)
+                .setCellEditor(new DefaultCellEditor(comboBox));
 
     } catch (Exception e) {
         JOptionPane.showMessageDialog(this, e.getMessage());
@@ -98,7 +126,7 @@ public class transactions extends javax.swing.JPanel {
                 @Override
                 public boolean isCellEditable(int row, int column) {
                 // Payment ID is NOT editable
-                    if (column == 0) {
+                    if (column == 0 || column == 1 || column == 2) {
                         return false;
                     }   
                     return true;
@@ -143,6 +171,22 @@ public class transactions extends javax.swing.JPanel {
             originalData = dataList.toArray(new Object[0][]);
             transactiontable.setModel(model);
             customizeTransactionTable();
+            
+            // Payment Method COMBOBOX
+            String[] pay_method = {
+                "Cash",
+                "Gcash",
+                "Others"
+            };
+            
+            // DATE EDITOR
+        transactiontable.getColumnModel().getColumn(3)
+                .setCellEditor(new DateCellEditor());
+            
+            JComboBox<String> comboBox = new JComboBox<>(pay_method);
+
+            transactiontable.getColumnModel().getColumn(4)
+                    .setCellEditor(new DefaultCellEditor(comboBox));
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage());
         }
@@ -186,6 +230,37 @@ public class transactions extends javax.swing.JPanel {
 
         for (int i = 0; i < transactiontable.getColumnModel().getColumnCount(); i++) {
             transactiontable.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
+        }
+        centerAlignTransactionTable();
+    }
+     
+     public class DateCellEditor extends AbstractCellEditor implements TableCellEditor { 
+        private JDateChooser dateChooser;
+
+        public DateCellEditor() {
+            dateChooser = new JDateChooser();
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return dateChooser.getDate();
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(
+                JTable table,
+                Object value,
+                boolean isSelected,
+                int row,
+                int column) {
+
+            if (value instanceof java.util.Date) {
+                dateChooser.setDate((java.util.Date) value);
+            } else {
+                dateChooser.setDate(null);
+            }
+
+            return dateChooser;
         }
     }
     
@@ -285,7 +360,7 @@ public class transactions extends javax.swing.JPanel {
         javax.swing.JFrame frame =
         (javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
 
-        frame.setContentPane(new edittransaction(String.valueOf(orderIDValue)));
+        frame.setContentPane(new edittransaction());
         frame.revalidate();
         frame.repaint(); 
     }                                         
@@ -373,31 +448,105 @@ public class transactions extends javax.swing.JPanel {
                 }
 
                 double totalAmount = rs.getDouble("total_amount");
-                // AUTO STATUS RULES
-                if (amount >= totalAmount) {
-                    paymentStatus = "Paid";
-                } else if (amount > 0) {
-                    paymentStatus = "Partial";
-                } else {
+                java.sql.Date sqlDate = null;
+
+                // RULE: UNPAID
+                if (amount == 0) {
+
                     paymentStatus = "Unpaid";
+
+                    JOptionPane.showMessageDialog(
+                        this,
+                        """
+                        RULE ENFORCED:
+
+                        If Amount = 0:
+                        • Payment Status must be UNPAID
+                        • Date Paid must be EMPTY
+
+                        The system corrected the values automatically.
+                        """
+                    );
+
+                    sqlDate = null;
                 }
 
-                java.sql.Date sqlDate = null;
-                // DATE RULES
-                if (paymentStatus.equals("Paid")
-                || paymentStatus.equals("Partial")) {
+                // RULE: PARTIAL
+                else if (amount > 0 && amount < totalAmount) {
+
+                    paymentStatus = "Partial";
+
+                    // REQUIRE DATE
                     if (dateObj == null
                     || dateObj.toString().trim().isEmpty()) {
-                        sqlDate = new java.sql.Date(System.currentTimeMillis());
-                    } else {
-                        if (dateObj instanceof java.sql.Date) {
-                            sqlDate = (java.sql.Date) dateObj;
-                        } else {
-                            sqlDate = java.sql.Date.valueOf(dateObj.toString());
-                        }   
+
+                        JOptionPane.showMessageDialog(
+                            this,
+                            """
+                            RULE ENFORCED:
+
+                            Partial payments require a Date Paid.
+
+                            Please input a valid payment date.
+                            """
+                        );
+
+                        return;
                     }
-                } else {
-                    sqlDate = null;
+
+                    if (dateObj instanceof java.sql.Date) {
+
+                        sqlDate = (java.sql.Date) dateObj;
+
+                    } else if (dateObj instanceof java.util.Date) {
+
+                        sqlDate = new java.sql.Date(
+                            ((java.util.Date) dateObj).getTime()
+                        );
+
+                    } else {
+
+                        sqlDate = java.sql.Date.valueOf(dateObj.toString());
+                    }
+                }
+
+                // RULE: PAID
+                else {
+
+                    paymentStatus = "Paid";
+
+                    // REQUIRE DATE
+                    if (dateObj == null
+                    || dateObj.toString().trim().isEmpty()) {
+
+                        JOptionPane.showMessageDialog(
+                            this,
+                            """
+                            RULE ENFORCED:
+
+                            Paid payments require a Date Paid.
+
+                            Please input a valid payment date.
+                            """
+                        );
+
+                        return;
+                    }
+
+                    if (dateObj instanceof java.sql.Date) {
+
+                        sqlDate = (java.sql.Date) dateObj;
+
+                    } else if (dateObj instanceof java.util.Date) {
+
+                        sqlDate = new java.sql.Date(
+                            ((java.util.Date) dateObj).getTime()
+                        );
+
+                    } else {
+
+                        sqlDate = java.sql.Date.valueOf(dateObj.toString());
+                    }
                 }
 
                 // PREVIEW
@@ -409,7 +558,7 @@ public class transactions extends javax.swing.JPanel {
                     + "Payment Status: "
                     + originalData[i][2] + "\n"
                     + "Date Paid: "
-                    + originalData[i][3] + "\n"
+                    + (sqlDate == null ? "EMPTY" : sqlDate) + "\n"
                     + "Payment Method: "
                     + originalData[i][4] + "\n"
                     + "Amount: "
