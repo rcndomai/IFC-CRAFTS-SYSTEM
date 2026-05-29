@@ -62,7 +62,7 @@ public class editorder extends javax.swing.JPanel {
         affiliateid.addItem(""); 
 
         while (rs.next()) {
-            affiliateid.addItem(String.valueOf(rs.getInt("affiliate_id")));
+            affiliateid.addItem(rs.getString("affiliate_id"));
         }
 
         rs.close();
