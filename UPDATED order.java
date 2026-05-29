@@ -25,6 +25,17 @@ public class order extends javax.swing.JPanel {
         }
     }
     
+     private void centerAlignOrderTable() {
+        javax.swing.table.DefaultTableCellRenderer centerRenderer =
+                new javax.swing.table.DefaultTableCellRenderer();
+
+        centerRenderer.setHorizontalAlignment(javax.swing.JLabel.CENTER);
+
+        for (int i = 0; i < ordertable.getColumnCount(); i++) {
+            ordertable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+    }
+    
     private void loadOrderTable() {
         currentView = "Orders";
 
@@ -40,8 +51,8 @@ public class order extends javax.swing.JPanel {
                 
             @Override
             public boolean isCellEditable(int row, int column) {
-            // Order ID & Total Amount column NOT editable
-                if (column == 0 && column == 6) {
+            // Order ID, Customer ID, & Total Amount column NOT editable
+                if (column == 0 || column == 4 || column == 6) {
                     return false;
                 }
                     return true;
@@ -127,7 +138,7 @@ public class order extends javax.swing.JPanel {
                 @Override
                 public boolean isCellEditable(int row, int column) {
                 // Order ID and Total Amount not editable
-                    if (column == 0 && column == 6) {
+                    if (column == 0 || column == 4 || column == 6) {
                         return false;
                     }
                     return true;
@@ -175,6 +186,24 @@ public class order extends javax.swing.JPanel {
             originalData = dataList.toArray(new Object[0][]);
             ordertable.setModel(model);
             customizeOrderTable();
+            // DATE EDITORS
+            ordertable.getColumnModel().getColumn(1)
+                    .setCellEditor(new DateCellEditor());
+
+            ordertable.getColumnModel().getColumn(2)
+                    .setCellEditor(new DateCellEditor());
+
+            // STATUS COMBOBOX
+            String[] statuses = {
+                "Not Started",
+                "In Progress",
+                "Done"
+            };
+
+            JComboBox<String> comboBox = new JComboBox<>(statuses);
+
+            ordertable.getColumnModel().getColumn(3)
+                    .setCellEditor(new DefaultCellEditor(comboBox));
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage());
@@ -190,8 +219,20 @@ public class order extends javax.swing.JPanel {
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setInt(1, orderId);
             ResultSet rs = pst.executeQuery();
-            DefaultTableModel model = new DefaultTableModel();
+            DefaultTableModel model = new DefaultTableModel() {
 
+                @Override
+                public boolean isCellEditable(int row, int column) {
+
+                    // Order ID, Product ID, and Price at Order NOT editable
+                    if (column == 0 || column == 1 || column == 3) {
+                        return false;
+                    }
+
+                    return true;
+                }
+            };
+            
             model.setColumnIdentifiers(new String[]{
                 "Order ID",
                 "Product ID",
@@ -244,11 +285,19 @@ public class order extends javax.swing.JPanel {
         }
 
         @Override
-        public Component getTableCellEditorComponent(JTable table, Object value,
-                                                     boolean isSelected, int row, int column) {
+        public Component getTableCellEditorComponent(
+                JTable table,
+                Object value,
+                boolean isSelected,
+                int row,
+                int column) {
+
             if (value instanceof java.util.Date) {
                 dateChooser.setDate((java.util.Date) value);
+            } else {
+                dateChooser.setDate(null);
             }
+
             return dateChooser;
         }
     }
@@ -291,6 +340,7 @@ public class order extends javax.swing.JPanel {
         for (int i = 0; i < ordertable.getColumnModel().getColumnCount(); i++) {
             ordertable.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
         }
+        centerAlignOrderTable();
     }
 
     
@@ -430,6 +480,9 @@ public class order extends javax.swing.JPanel {
     }                                             
 
     private void savebtnActionPerformed(java.awt.event.ActionEvent evt) {                                        
+        if (ordertable.isEditing()) {
+            ordertable.getCellEditor().stopCellEditing();
+        }
         DefaultTableModel model = (DefaultTableModel) ordertable.getModel();
 
         try {
@@ -493,25 +546,62 @@ public class order extends javax.swing.JPanel {
                         + "total_amount=? "
                         + "WHERE order_id=?";
 
-                    PreparedStatement pst = conn.prepareStatement(sql);
+                        PreparedStatement pst = conn.prepareStatement(sql);
 
-                    pst.setDate(1,
-                        new java.sql.Date(
-                                ((java.util.Date) model.getValueAt(i, 1)).getTime()));
-                    pst.setDate(2,
-                        new java.sql.Date(
-                                ((java.util.Date) model.getValueAt(i, 2)).getTime()));
-                    pst.setString(3,
-                        model.getValueAt(i, 3).toString());
-                    pst.setInt(4,
-                        Integer.parseInt(model.getValueAt(i, 4).toString()));
-                    pst.setString(5,
-                        model.getValueAt(i, 5).toString());
-                    pst.setDouble(6,
-                        Double.parseDouble(model.getValueAt(i, 6).toString()));
-                    pst.setInt(7,
-                        Integer.parseInt(model.getValueAt(i, 0).toString()));
-                    pst.executeUpdate();
+                        // Get values safely
+                        Object orderDateObj = model.getValueAt(i, 1);
+                        Object dueDateObj = model.getValueAt(i, 2);
+                        Object statusObj = model.getValueAt(i, 3);
+                        Object customerObj = model.getValueAt(i, 4);
+                        Object affiliateObj = model.getValueAt(i, 5);
+                        Object totalObj = model.getValueAt(i, 6);
+
+                        // Validation
+                        if (orderDateObj == null ||
+                            dueDateObj == null ||
+                            statusObj == null ||
+                            customerObj == null ||
+                            totalObj == null) {
+
+                            JOptionPane.showMessageDialog(this,"Required fields cannot be empty.");
+                            return;
+                            }
+
+                            // Dates
+                            pst.setDate(1,
+                                new java.sql.Date(
+                                    ((java.util.Date) orderDateObj).getTime()));
+
+                            pst.setDate(2,
+                                new java.sql.Date(
+                                    ((java.util.Date) dueDateObj).getTime()));
+
+                            // Strings
+                            pst.setString(3, statusObj.toString());
+
+                            // Customer ID
+                            pst.setInt(4,
+                                Integer.parseInt(customerObj.toString()));
+
+                            // Affiliate ID (nullable)
+                            if (affiliateObj == null ||
+                                affiliateObj.toString().trim().isEmpty()) {
+
+                                pst.setNull(5, java.sql.Types.VARCHAR);
+
+                            } else {
+                                pst.setString(5, affiliateObj.toString());
+                            }
+
+                            // Total amount
+                            pst.setDouble(6,
+                                Double.parseDouble(totalObj.toString()));
+
+                            // Order ID
+                            pst.setInt(7,
+                                Integer.parseInt(model.getValueAt(i, 0).toString()));
+
+                            pst.executeUpdate();
                 } else if (currentView.equals("Order_Items")) {
                     String sql =
                         "UPDATE Order_Items SET "
