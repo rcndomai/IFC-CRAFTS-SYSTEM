@@ -23,9 +23,28 @@ public class orderitem extends javax.swing.JPanel {
         }
     }
     
+    private void centerAlignOrderItemTable() {
+        javax.swing.table.DefaultTableCellRenderer centerRenderer =
+                new javax.swing.table.DefaultTableCellRenderer();
+
+        centerRenderer.setHorizontalAlignment(javax.swing.JLabel.CENTER);
+
+        for (int i = 0; i < orderitemtable.getColumnCount(); i++) {
+            orderitemtable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
+    }
+    
     private void loadOrderItemTable() {
         try {
-            String sql = "SELECT * FROM Order_Items ORDER BY order_id";
+            String sql =
+                "SELECT oi.order_id, " +
+                "oi.product_id, " +
+                "p.product_name, " +
+                "oi.quantity, " +
+                "oi.price_at_order " +
+                "FROM Order_Items oi " +
+                "JOIN Products p ON oi.product_id = p.product_id " +
+                "ORDER BY oi.order_id";
 
             Connection conn = IFCDatabase.getConnection();
             PreparedStatement pst = conn.prepareStatement(sql);
@@ -35,8 +54,8 @@ public class orderitem extends javax.swing.JPanel {
                 
             @Override
             public boolean isCellEditable(int row, int column) {
-            // Price at Order column NOT editable
-                if (column == 3) {
+            // only QUANTITY editable
+                if (column == 0 || column == 1 || column == 2 || column == 4) {
                     return false;
                 }
                     return true;
@@ -47,6 +66,7 @@ public class orderitem extends javax.swing.JPanel {
         model.setColumnIdentifiers(new String[]{
             "Order ID",
             "Product ID",
+            "Product Name",
             "Quantity",
             "Price at Order"
         });
@@ -56,9 +76,9 @@ public class orderitem extends javax.swing.JPanel {
 
         while (rs.next()) {
             Object[] row = {
-
                 rs.getInt("order_id"),
                 rs.getInt("product_id"),
+                rs.getString("product_name"),
                 rs.getInt("quantity"),
                 rs.getDouble("price_at_order")
             };
@@ -83,7 +103,15 @@ public class orderitem extends javax.swing.JPanel {
     
     private void loadOrderRecord(int orderId) {
         try {
-            String sql = "SELECT * FROM Order_Items WHERE order_id = ?";
+            String sql =
+                "SELECT oi.order_id, " +
+                "oi.product_id, " +
+                "p.product_name, " +
+                "oi.quantity, " +
+                "oi.price_at_order " +
+                "FROM Order_Items oi " +
+                "JOIN Products p ON oi.product_id = p.product_id " +
+                "WHERE oi.order_id = ?";
 
             Connection conn = IFCDatabase.getConnection();
             PreparedStatement pst = conn.prepareStatement(sql);
@@ -92,8 +120,8 @@ public class orderitem extends javax.swing.JPanel {
             DefaultTableModel model = new DefaultTableModel() {
                 @Override
                 public boolean isCellEditable(int row, int column) {
-                // Price at Order NOT editable
-                    if (column == 3) {
+                // Order ID, Product ID, Product Name and Price at Order NOT editable
+                    if (column == 0 || column == 1 || column == 2 || column == 4) {
                         return false;
                     }   
                     return true;
@@ -103,6 +131,7 @@ public class orderitem extends javax.swing.JPanel {
             model.setColumnIdentifiers(new String[]{
                 "Order ID",
                 "Product ID",
+                "Product Name",
                 "Quantity",
                 "Price at Order"
             });
@@ -116,9 +145,10 @@ public class orderitem extends javax.swing.JPanel {
                 Object[] row = {
                     rs.getInt("order_id"),
                     rs.getInt("product_id"),
+                    rs.getString("product_name"),
                     rs.getInt("quantity"),
                     rs.getDouble("price_at_order")
-            };
+                };
 
                 model.addRow(row);
                 idList.add(rs.getInt("order_id"));
@@ -141,7 +171,15 @@ public class orderitem extends javax.swing.JPanel {
     
     private void loadProductRecord(int productId) {
         try {
-            String sql = "SELECT * FROM Order_Items WHERE product_id = ?";
+            String sql =
+                "SELECT oi.order_id, " +
+                "oi.product_id, " +
+                "p.product_name, " +
+                "oi.quantity, " +
+                "oi.price_at_order " +
+                "FROM Order_Items oi " +
+                "JOIN Products p ON oi.product_id = p.product_id " +
+                "WHERE oi.product_id = ?";
 
             Connection conn = IFCDatabase.getConnection();
             PreparedStatement pst = conn.prepareStatement(sql);
@@ -150,8 +188,8 @@ public class orderitem extends javax.swing.JPanel {
             DefaultTableModel model = new DefaultTableModel() {
                 @Override
                 public boolean isCellEditable(int row, int column) {
-                    // Price at Order NOT editable
-                    if (column == 3) {
+                    // only QUANTITY editable
+                    if (column == 0 || column == 1 || column == 2 || column == 4) {
                         return false;
                     }
                     return true;
@@ -161,6 +199,7 @@ public class orderitem extends javax.swing.JPanel {
             model.setColumnIdentifiers(new String[]{
                 "Order ID",
                 "Product ID",
+                "Product Name",
                 "Quantity",
                 "Price at Order"
             });
@@ -174,9 +213,10 @@ public class orderitem extends javax.swing.JPanel {
                 Object[] row = {
                     rs.getInt("order_id"),
                     rs.getInt("product_id"),
+                    rs.getString("product_name"),
                     rs.getInt("quantity"),
                     rs.getDouble("price_at_order")
-            };
+                };
 
                 model.addRow(row);
                 idList.add(rs.getInt("product_id"));
@@ -236,6 +276,7 @@ public class orderitem extends javax.swing.JPanel {
         for (int i = 0; i < orderitemtable.getColumnModel().getColumnCount(); i++) {
             orderitemtable.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
         }
+        centerAlignOrderItemTable();
     }
     
     @SuppressWarnings("unchecked")
@@ -334,44 +375,60 @@ public class orderitem extends javax.swing.JPanel {
         javax.swing.JFrame frame =
         (javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
 
-        frame.setContentPane(new editorderitem());
+        frame.setContentPane(new orderitem());
         frame.revalidate();
         frame.repaint(); 
     }                                       
 
     private void searchorderitemIDActionPerformed(java.awt.event.ActionEvent evt) {                                                  
-        String input = JOptionPane.showInputDialog(this,"Enter Order ID (3000-3999) or Product ID (2000-2999):");
 
-        if (input == null || input.trim().isEmpty()) {
-            return;
+    String input = JOptionPane.showInputDialog(
+        this,
+        "Enter Order ID (3000-3999) or Product ID (2000-2999):"
+    );
+
+    if (input == null || input.trim().isEmpty()) {
+        return;
+    }
+
+    input = input.trim();
+
+    try {
+        int id = Integer.parseInt(input);
+
+        // ORDER ID
+        if (input.startsWith("3")) {
+
+            if (id < 3000 || id > 3999) {
+                JOptionPane.showMessageDialog(this,
+                    "Order ID must be between 3000-3999.");
+                return;
+            }
+
+            loadOrderRecord(id);
         }
 
-        try {
-            int id = Integer.parseInt(input);
-            String[] options = {
-                "Search by Order ID",
-                "Search by Product ID"
-            };
+        // PRODUCT ID
+        else if (input.startsWith("2")) {
 
-            int choice = JOptionPane.showOptionDialog(
-                this,
-                "Choose search type:",
-                "Search",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.PLAIN_MESSAGE,
-                null,
-                options,
-                options[0]
-            );
-
-            if (choice == 0) {
-                loadOrderRecord(id);
-            } else if (choice == 1) {
-                loadProductRecord(id);
+            if (id < 2000 || id > 2999) {
+                JOptionPane.showMessageDialog(this,
+                    "Product ID must be between 2000-2999.");
+                return;
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this,"ID must be a valid number."
-        );
+
+            loadProductRecord(id);
+        }
+
+        // INVALID PREFIX
+        else {
+            JOptionPane.showMessageDialog(this,
+                "ID must start with 2 or 3.");
+        }
+
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this,
+            "ID must be a valid number.");
     }
     }                                                 
 
@@ -455,22 +512,26 @@ public class orderitem extends javax.swing.JPanel {
                 
                 String sql =
                     "UPDATE Order_Items SET "
-                    + "order_id=?, "
-                    + "product_id=?, "
                     + "quantity=? "
                     + "WHERE order_id=? "
                     + "AND product_id=?";
 
                 PreparedStatement pst = conn.prepareStatement(sql);
 
-                pst.setInt(1, orderId); // new order_id
-                pst.setInt(2, productId); // new product_id
-                pst.setInt(3, Integer.parseInt(model.getValueAt(i, 2).toString())); // quantity
+                // quantity
+                pst.setInt(1,
+                    Integer.parseInt(model.getValueAt(i, 3).toString()));
 
-                // original IDs for WHERE clause
-                pst.setInt(4, Integer.parseInt(originalData[i][0].toString()));
-                pst.setInt(5, Integer.parseInt(originalData[i][1].toString()));
+                // WHERE order_id
+                pst.setInt(2,
+                    Integer.parseInt(originalData[i][0].toString()));
+
+                // WHERE product_id
+                pst.setInt(3,
+                    Integer.parseInt(originalData[i][1].toString()));
+
                 pst.executeUpdate();
+
             }
             
             JOptionPane.showMessageDialog(this,"Changes saved successfully!");
