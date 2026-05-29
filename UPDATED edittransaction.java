@@ -27,36 +27,35 @@ public class edittransaction extends javax.swing.JPanel {
     paymet.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
     tamount.setFont(customFont.deriveFont(java.awt.Font.BOLD, 28f));
 
-    if (orderID.getText() != null && !orderID.getText().isEmpty()) {
-        loadLatestPaymentID(orderID.getText());
-    }
+    loadLatestPaymentID();
     }
     
     public edittransaction(String orderIdValue) {
         this();
-        orderID.setText(orderIdValue); 
-        loadLatestPaymentID(orderIdValue); 
+        orderID.setText(orderIdValue);
     }
     
-    private void loadLatestPaymentID(String orderID) {
+    private void loadLatestPaymentID() {
     try {
         Connection conn = IFCDatabase.getConnection();
 
         String sql =
-            "SELECT payment_id FROM Payments " +
-            "WHERE order_id = ? " +
-            "ORDER BY payment_id DESC " +
-            "LIMIT 1";
+            "SELECT MAX(payment_id) AS latest_id FROM Payments";
 
         PreparedStatement pst = conn.prepareStatement(sql);
-        pst.setInt(1, Integer.parseInt(orderID));
-
         ResultSet rs = pst.executeQuery();
 
         if (rs.next()) {
-            paymentID.setText(String.valueOf(rs.getInt("payment_id")));
+
+            int latestID = rs.getInt("latest_id");
+
+            // next generated payment ID
+            paymentID.setText(String.valueOf(latestID + 1));
+
         } else {
-            paymentID.setText(""); // no payment yet
+
+            // if table empty
+            paymentID.setText("4000");
         }
 
         rs.close();
@@ -64,8 +63,10 @@ public class edittransaction extends javax.swing.JPanel {
         conn.close();
 
     } catch (Exception e) {
-        JOptionPane.showMessageDialog(this,
-            "Failed to load Payment ID: " + e.getMessage());
+        JOptionPane.showMessageDialog(
+            this,
+            "Failed to load Payment ID: " + e.getMessage()
+        );
     }
 }
 
@@ -389,20 +390,106 @@ public class edittransaction extends javax.swing.JPanel {
             String paymentStatusValue;
             java.sql.Date sqlDatePaid = null;
 
+            // USER INPUTS
+            String selectedStatus =
+                paymentstatus.getSelectedItem() == null
+                ? ""
+                : paymentstatus.getSelectedItem().toString();
+
+            java.util.Date chosenDate = datepaid.getDate();
+
+            // RULE: UNPAID
             if (amountValue == 0) {
+
                 paymentStatusValue = "Unpaid";
-            } else if (amountValue < totalAmount) {
-                paymentStatusValue = "Partial";
-                sqlDatePaid =new java.sql.Date(System.currentTimeMillis());
-            } else {
-                paymentStatusValue = "Paid";
-                sqlDatePaid =new java.sql.Date(System.currentTimeMillis());
+
+                // force correct values
+                paymentstatus.setSelectedItem("Unpaid");
+                datepaid.setDate(null);
+
+                JOptionPane.showMessageDialog(
+                    this,
+                    """
+                    RULE ENFORCED:
+
+                    If Amount = 0:
+                    • Payment Status must be UNPAID
+                    • Date Paid must be empty
+
+                    The system corrected the values automatically.
+                    """
+                );
+
+                sqlDatePaid = null;
             }
+
+            // RULE: PARTIAL
+            else if (amountValue < totalAmount) {
+
+                paymentStatusValue = "Partial";
+
+                // auto-correct status
+                paymentstatus.setSelectedItem("Partial");
+
+                // REQUIRE DATE
+                if (chosenDate == null) {
+
+                    JOptionPane.showMessageDialog(
+                        this,
+                        """
+                        RULE ENFORCED:
+
+                        Partial payments require a Date Paid.
+
+                        Please select a date using the Date Chooser.
+                        """
+                    );
+
+                    return;
+                }
+
+                sqlDatePaid = new java.sql.Date(chosenDate.getTime());
+            }
+
+            // RULE: PAID
+            else {
+
+                paymentStatusValue = "Paid";
+
+                // auto-correct status
+                paymentstatus.setSelectedItem("Paid");
+
+                // REQUIRE DATE
+                if (chosenDate == null) {
+
+                    JOptionPane.showMessageDialog(
+                        this,
+                        """
+                        RULE ENFORCED:
+
+                        Paid payments require a Date Paid.
+
+                        Please select a date using the Date Chooser.
+                        """
+                    );
+
+                    return;
+                }
+
+                sqlDatePaid = new java.sql.Date(chosenDate.getTime());
+            }
+
+            String dateDisplay =
+                (sqlDatePaid == null)
+                ? "EMPTY"
+                : sqlDatePaid.toString();
 
             String summary =
                 "Are you sure you want to save this?\n\n"
+                + "Payment ID: " + paymentIDText + "\n"
                 + "Order ID: " + orderIDValue + "\n"
                 + "Payment Status: " + paymentStatusValue + "\n"
+                + "Date Paid: " + dateDisplay + "\n"
                 + "Payment Method: " + paymentMethodValue + "\n"
                 + "Amount: " + amountValue;
 
@@ -484,6 +571,12 @@ public class edittransaction extends javax.swing.JPanel {
 
             if (rowsInserted > 0) {
                 JOptionPane.showMessageDialog(this,"Payment saved successfully!");
+                paymentID.setText("");
+                orderID.setText("");
+                paymentstatus.setSelectedIndex(-1);
+                datepaid.setDate(null);
+                paymentmethod.setSelectedIndex(-1);
+                amount.setText("");
             } else {
                 JOptionPane.showMessageDialog(this,"Save failed.");
             }
