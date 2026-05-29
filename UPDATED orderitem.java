@@ -375,9 +375,9 @@ public class orderitem extends javax.swing.JPanel {
         javax.swing.JFrame frame =
         (javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
 
-        frame.setContentPane(new orderitem());
+        frame.setContentPane(new editorderitem());
         frame.revalidate();
-        frame.repaint(); 
+        frame.repaint();
     }                                       
 
     private void searchorderitemIDActionPerformed(java.awt.event.ActionEvent evt) {                                                  
