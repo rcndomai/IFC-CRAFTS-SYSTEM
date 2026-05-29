@@ -1,0 +1,642 @@
+import javax.swing.JOptionPane;
+import java.awt.BorderLayout;
+import java.awt.FontFormatException;
+import java.io.IOException;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
+import javafx.scene.chart.PieChart;
+import javafx.scene.layout.VBox;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import javax.swing.JLabel;
+
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
+ */
+
+
+/**
+ *
+ * @author hezekiahmagalona
+ */
+public class dashboard extends javax.swing.JPanel {
+   
+    /**
+     * Creates new form customer
+     */
+    private Connection conn;
+    private java.awt.Font customFont;
+    private JLabel dateDisplayLabel;
+    public dashboard() {
+        initComponents();
+        DB_connect();
+        new JFXPanel();
+        addPieChart();           
+        loadSales();             
+        loadProfit();            
+
+        dateDisplayLabel = new JLabel("All Time");
+        dateDisplayLabel.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 18));
+        dateDisplayLabel.setForeground(java.awt.Color.WHITE);
+
+        this.add(dateDisplayLabel, new org.netbeans.lib.awtextra.AbsoluteConstraints(760, 160, 300, 40));
+    }
+    private void DB_connect() {
+        try {
+            Class.forName("org.postgresql.Driver");
+            conn = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/IFC_Database",
+                "postgres",
+                "123"
+            );
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
+        }
+    }
+    
+    private void loadFonts() {
+        try {
+            customFont = java.awt.Font.createFont(
+                    java.awt.Font.TRUETYPE_FONT,
+                    getClass().getResourceAsStream("/ifccrafts/assets/MyFont.ttf")
+            );
+        } catch (FontFormatException | IOException e) {
+            customFont = new java.awt.Font("Serif", java.awt.Font.PLAIN, 18);
+        }
+    }
+    
+    private void addPieChart() {
+        // JavaFX embedded container
+        JFXPanel fxPanel = new JFXPanel();
+
+        bestsellingitems_container.setLayout(new BorderLayout());
+        bestsellingitems_container.removeAll();
+        bestsellingitems_container.add(fxPanel, BorderLayout.CENTER);
+        bestsellingitems_container.revalidate();
+        bestsellingitems_container.repaint();
+
+        Platform.runLater(() -> {
+            PieChart pieChart = new PieChart();
+            pieChart.setTitle("All-Time Best Sellers");
+            pieChart.setLabelsVisible(true);
+            
+            pieChart.setLabelLineLength(20);
+            pieChart.setClockwise(true);
+
+
+            try {
+                String sql =
+                    "SELECT p.product_name, SUM(oi.quantity) AS total_qty\n" +
+                    "FROM Order_Items oi\n" +
+                    "JOIN Products p ON oi.product_id = p.product_id\n" +
+                    "GROUP BY p.product_name\n" +
+                    "ORDER BY total_qty DESC";
+
+                PreparedStatement pst = conn.prepareStatement(sql);
+                ResultSet rs = pst.executeQuery();
+
+
+                while (rs.next()) {
+
+                    String name = rs.getString("product_name");
+                    int qty = rs.getInt("total_qty");
+
+                    pieChart.getData().add(
+                        new PieChart.Data(name, qty)
+                    );
+                }
+
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            VBox chartCard = new VBox(pieChart);
+            chartCard.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-padding: 20;" +
+                "-fx-border-color: #000000;" +
+                "-fx-border-width: 3;"
+            );
+
+            fxPanel.setScene(new Scene(chartCard));
+        });
+        
+    }
+    private void showDailyProfitChart(int month, int year) {
+
+        JFXPanel fxPanel = new JFXPanel();
+
+        profit_container.removeAll();
+        profit_container.setLayout(new BorderLayout());
+        profit_container.add(fxPanel, BorderLayout.CENTER);
+
+        Platform.runLater(() -> {
+
+            javafx.scene.chart.CategoryAxis xAxis = new javafx.scene.chart.CategoryAxis();
+            javafx.scene.chart.NumberAxis yAxis = new javafx.scene.chart.NumberAxis();
+
+            javafx.scene.chart.BarChart<String, Number> chart =
+                    new javafx.scene.chart.BarChart<>(xAxis, yAxis);
+
+            chart.setTitle("Daily Profit (" + month + "/" + year + ")");
+            
+            chart.setAnimated(true);
+            chart.setLegendVisible(false);
+
+
+            javafx.scene.chart.XYChart.Series<String, Number> series =
+                    new javafx.scene.chart.XYChart.Series<>();
+
+            try {
+                String sql =
+                    "SELECT EXTRACT(DAY FROM date_paid) AS day, " +
+                    "SUM(amount) AS daily_sales " +
+                    "FROM Payments " +
+                    "WHERE payment_status='Paid' " +
+                    "AND EXTRACT(MONTH FROM date_paid)=? " +
+                    "AND EXTRACT(YEAR FROM date_paid)=? " +
+                    "GROUP BY day ORDER BY day";
+
+                PreparedStatement pst = conn.prepareStatement(sql);
+                pst.setInt(1, month);
+                pst.setInt(2, year);
+
+                ResultSet rs = pst.executeQuery();
+
+                while (rs.next()) {
+
+                    int day = rs.getInt("day");
+                    double sales = rs.getDouble("daily_sales");
+
+                    double profit = sales;  
+
+                    series.getData().add(
+                        new javafx.scene.chart.XYChart.Data<>(String.valueOf(day), profit)
+                    );
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            chart.getData().add(series);
+            fxPanel.setScene(new Scene(chart));
+        });
+
+        profit_container.revalidate();
+        profit_container.repaint();
+    }
+    private void showProfitBarChart(int month, int year) {
+
+        JFXPanel fxPanel = new JFXPanel();
+
+        profit_container.removeAll();
+        profit_container.setLayout(new BorderLayout());
+        profit_container.add(fxPanel, BorderLayout.CENTER);
+
+        Platform.runLater(() -> {
+
+            javafx.scene.chart.CategoryAxis xAxis = new javafx.scene.chart.CategoryAxis();
+            javafx.scene.chart.NumberAxis yAxis = new javafx.scene.chart.NumberAxis();
+
+            javafx.scene.chart.BarChart<String, Number> barChart =
+                    new javafx.scene.chart.BarChart<>(xAxis, yAxis);
+
+            barChart.setTitle("Profit");
+
+            javafx.scene.chart.XYChart.Series<String, Number> series =
+                    new javafx.scene.chart.XYChart.Series<>();
+
+            try {
+                double sales = 0;
+                double expense = 0;
+
+                // SALES
+                String salesSQL =
+                    "SELECT SUM(amount) AS total " +
+                    "FROM Payments " +
+                    "WHERE payment_status='Paid' " +
+                    "AND EXTRACT(MONTH FROM date_paid)=? " +
+                    "AND EXTRACT(YEAR FROM date_paid)=?";
+
+                PreparedStatement pst1 = conn.prepareStatement(salesSQL);
+                pst1.setInt(1, month);
+                pst1.setInt(2, year);
+                ResultSet rs1 = pst1.executeQuery();
+
+                if (rs1.next()) {
+                    sales = rs1.getDouble("total");
+                }
+
+                // EXPENSE
+                String expSQL = "SELECT SUM(material_cost) AS totalExpense FROM Inventory";
+                PreparedStatement pst2 = conn.prepareStatement(expSQL);
+                ResultSet rs2 = pst2.executeQuery();
+
+                if (rs2.next()) {
+                    expense = rs2.getDouble("totalExpense");
+                }
+
+                double profit = sales - expense;
+
+                // BAR GRAPH DATA
+                series.getData().add(new javafx.scene.chart.XYChart.Data<>("Profit", profit));
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            barChart.getData().add(series);
+            fxPanel.setScene(new Scene(barChart));
+        });
+
+        profit_container.revalidate();
+        profit_container.repaint();
+    }
+    private void loadSales() {
+        try {
+
+            double totalSales = 0;
+
+            String salesSQL =
+                "SELECT SUM(amount) AS totalSales " +
+                "FROM Payments " +
+                "WHERE payment_status='Paid'";
+
+            PreparedStatement pst = conn.prepareStatement(salesSQL);
+            ResultSet rs = pst.executeQuery();
+
+            if (rs.next()) {
+                totalSales = rs.getDouble("totalSales");
+            }
+
+            JLabel label = new JLabel("₱ " + totalSales);
+            label.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 30));
+            label.setHorizontalAlignment(JLabel.CENTER);
+
+            sales_container.removeAll();
+            sales_container.setLayout(new BorderLayout());
+            sales_container.add(label, BorderLayout.CENTER);
+            sales_container.revalidate();
+            sales_container.repaint();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
+        }
+    }
+
+
+ 
+    private void besterReload() {
+        bestsellingitems_container.removeAll();
+        addPieChart();
+    }
+    
+    private void loadProfit() {
+        try {
+
+            double totalSales = 0;
+            double totalExpense = 0;
+
+            // SALES
+            String salesSQL =
+                "SELECT SUM(amount) AS totalSales " +
+                "FROM Payments WHERE payment_status='Paid'";
+
+            PreparedStatement pst1 = conn.prepareStatement(salesSQL);
+            ResultSet rs1 = pst1.executeQuery();
+
+            if (rs1.next()) {
+                totalSales = rs1.getDouble("totalSales");
+            }
+
+            // COST (Inventory)
+            String expSQL =
+                "SELECT SUM(material_cost) AS totalExpense FROM Inventory";
+
+            PreparedStatement pst2 = conn.prepareStatement(expSQL);
+            ResultSet rs2 = pst2.executeQuery();
+
+            if (rs2.next()) {
+                totalExpense = rs2.getDouble("totalExpense");
+            }
+
+            double profit = totalSales - totalExpense;
+
+            JLabel label = new JLabel("₱ " + profit);
+            label.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 30));
+            label.setHorizontalAlignment(JLabel.CENTER);
+
+            profit_container.removeAll();
+            profit_container.setLayout(new BorderLayout());
+            profit_container.add(label, BorderLayout.CENTER);
+            profit_container.revalidate();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
+        }
+    }
+    
+        private void bestsellerReload() {
+            bestsellingitems_container.removeAll();
+            addPieChart();
+        }
+    
+    private void loadSalesByDate(int month, int year) {
+        try {
+            String sql =
+                "SELECT SUM(amount) AS totalSales " +
+                "FROM Payments " +
+                "WHERE payment_status='Paid' " +
+                "AND EXTRACT(MONTH FROM date_paid) = ? " +
+                "AND EXTRACT(YEAR FROM date_paid) = ?";
+
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setInt(1, month);
+            pst.setInt(2, year);
+
+            ResultSet rs = pst.executeQuery();
+
+            double sales = 0;
+            if (rs.next()) {
+                sales = rs.getDouble("totalSales");
+            }
+
+            JLabel label = new JLabel("₱ " + sales);
+            label.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 30));
+            label.setHorizontalAlignment(JLabel.CENTER);
+
+            sales_container.removeAll();
+            sales_container.setLayout(new BorderLayout());
+            sales_container.add(label, BorderLayout.CENTER);
+            sales_container.revalidate();
+            sales_container.repaint();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void loadProfitByDate(int month, int year) {
+        try {
+            // SALES BY DATE
+            String salesSQL =
+                "SELECT SUM(amount) AS totalSales " +
+                "FROM Payments " +
+                "WHERE payment_status='Paid' " +
+                "AND EXTRACT(MONTH FROM date_paid)=? " +
+                "AND EXTRACT(YEAR FROM date_paid)=?";
+
+            PreparedStatement pst1 = conn.prepareStatement(salesSQL);
+            pst1.setInt(1, month);
+            pst1.setInt(2, year);
+            ResultSet rs1 = pst1.executeQuery();
+
+            double sales = 0;
+            if (rs1.next()) {
+                sales = rs1.getDouble("totalSales");
+            }
+
+            // EXPENSE
+            String expSQL = "SELECT SUM(material_cost) AS totalExpense FROM Inventory";
+            PreparedStatement pst2 = conn.prepareStatement(expSQL);
+            ResultSet rs2 = pst2.executeQuery();
+
+            double expense = 0;
+            if (rs2.next()) {
+                expense = rs2.getDouble("totalExpense");
+            }
+
+            double profit = sales - expense;
+
+            JLabel label = new JLabel("₱ " + profit);
+            label.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 30));
+            label.setHorizontalAlignment(JLabel.CENTER);
+
+            profit_container.removeAll();
+            profit_container.setLayout(new BorderLayout());
+            profit_container.add(label, BorderLayout.CENTER);
+            profit_container.revalidate();
+            profit_container.repaint();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void loadBestSellingByDate(int month, int year) {
+
+        bestsellingitems_container.removeAll();
+
+        JFXPanel fxPanel = new JFXPanel();
+        bestsellingitems_container.setLayout(new BorderLayout());
+        bestsellingitems_container.add(fxPanel, BorderLayout.CENTER);
+
+        Platform.runLater(() -> {
+
+            PieChart chart = new PieChart();
+            chart.setTitle("Best Sellers (" + month + "/" + year + ")");
+
+            try {
+
+                String sql =
+                    "SELECT p.product_name, SUM(oi.quantity) AS total_qty " +
+                    "FROM Order_Items oi " +
+                    "JOIN Orders o ON oi.order_id = o.order_id " +
+                    "JOIN Products p ON oi.product_id = p.product_id " +
+                    "WHERE EXTRACT(MONTH FROM o.order_date)=? " +
+                    "AND EXTRACT(YEAR FROM o.order_date)=? " +
+                    "GROUP BY p.product_name";
+
+                PreparedStatement pst = conn.prepareStatement(sql);
+                pst.setInt(1, month);
+                pst.setInt(2, year);
+
+                ResultSet rs = pst.executeQuery();
+
+                while (rs.next()) {
+
+                    String name = rs.getString("product_name");
+                    int qty = rs.getInt("total_qty");
+
+                    chart.getData().add(
+                        new PieChart.Data(name, qty)
+                    );
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            VBox chartCard = new VBox(chart);
+            chartCard.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-padding: 20;" +
+                "-fx-border-color: #000000;" +
+                "-fx-border-width: 3;"
+            );
+
+            fxPanel.setScene(new Scene(chartCard));
+        });
+
+        bestsellingitems_container.revalidate();
+        bestsellingitems_container.repaint();
+    }
+
+
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    private void initComponents() {
+
+        jMonthChooser1 = new com.toedter.calendar.JMonthChooser();
+        jYearChooser1DASHBOARD = new com.toedter.calendar.JYearChooser();
+        oID2 = new javax.swing.JLabel();
+        oID1 = new javax.swing.JLabel();
+        oID = new javax.swing.JLabel();
+        refresh = new javax.swing.JButton();
+        searchdate = new javax.swing.JButton();
+        back = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        bestsellingitems_container = new javax.swing.JPanel();
+        sales_container = new javax.swing.JPanel();
+        profit_container = new javax.swing.JPanel();
+        bg = new javax.swing.JLabel();
+
+        setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+        add(jMonthChooser1, new org.netbeans.lib.awtextra.AbsoluteConstraints(410, 100, 130, 40));
+        add(jYearChooser1DASHBOARD, new org.netbeans.lib.awtextra.AbsoluteConstraints(280, 100, 80, 40));
+
+        oID2.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
+        oID2.setForeground(new java.awt.Color(255, 255, 255));
+        oID2.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        oID2.setText("Profit");
+        add(oID2, new org.netbeans.lib.awtextra.AbsoluteConstraints(880, 450, 60, 50));
+
+        oID1.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
+        oID1.setForeground(new java.awt.Color(255, 255, 255));
+        oID1.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        oID1.setText("Best-Selling Items");
+        add(oID1, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 160, 200, 50));
+
+        oID.setFont(new java.awt.Font("Big Caslon", 0, 24)); // NOI18N
+        oID.setForeground(new java.awt.Color(255, 255, 255));
+        oID.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        oID.setText("Sales");
+        add(oID, new org.netbeans.lib.awtextra.AbsoluteConstraints(880, 170, 60, 50));
+
+        refresh.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        refresh.setText("Refresh");
+        refresh.addActionListener(this::refreshActionPerformed);
+        add(refresh, new org.netbeans.lib.awtextra.AbsoluteConstraints(970, 110, 150, 40));
+
+        searchdate.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+        searchdate.setText("Search Date");
+        searchdate.addActionListener(this::searchdateActionPerformed);
+        add(searchdate, new org.netbeans.lib.awtextra.AbsoluteConstraints(800, 110, 150, 40));
+
+        back.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/back.png"))); // NOI18N
+        back.setBorderPainted(false);
+        back.setContentAreaFilled(false);
+        back.setFocusPainted(false);
+        back.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        back.addActionListener(this::backActionPerformed);
+        add(back, new org.netbeans.lib.awtextra.AbsoluteConstraints(98, 75, -1, 77));
+
+        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 280, -1, 70));
+
+        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 380, -1, 70));
+
+        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 480, -1, 70));
+
+        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(540, 180, -1, 70));
+
+        bestsellingitems_container.setLayout(new java.awt.BorderLayout());
+        add(bestsellingitems_container, new org.netbeans.lib.awtextra.AbsoluteConstraints(140, 230, 490, 490));
+
+        sales_container.setLayout(new java.awt.BorderLayout());
+        add(sales_container, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 230, 430, 210));
+
+        profit_container.setLayout(new java.awt.BorderLayout());
+        add(profit_container, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 510, 430, 210));
+
+        bg.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ifccrafts/assets/mainbg.png"))); // NOI18N
+        bg.setText("jLabel5");
+        add(bg, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1300, 850));
+    }// </editor-fold>                        
+
+    private void backActionPerformed(java.awt.event.ActionEvent evt) {                                     
+        javax.swing.JFrame frame =
+        (javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+
+        frame.setContentPane(new homepage());
+        frame.revalidate();
+        frame.repaint();
+    }                                    
+
+    private void refreshActionPerformed(java.awt.event.ActionEvent evt) {                                        
+        bestsellerReload();
+        loadSales();
+        loadProfit();
+        dateDisplayLabel.setText("All Time");
+
+        JOptionPane.showMessageDialog(this, "Dashboard refreshed!");
+    }                                       
+
+    private void searchdateActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        try {
+
+            int month = jMonthChooser1.getMonth() + 1; // 0-11 kasi index
+            int year = jYearChooser1DASHBOARD.getYear();
+
+            String monthName = new java.text.DateFormatSymbols().getMonths()[month - 1];
+            dateDisplayLabel.setText("for " + monthName + " " + year);
+
+            loadSalesByDate(month, year);
+            loadProfitByDate(month, year);
+            loadBestSellingByDate(month, year);
+            showDailyProfitChart(month, year);
+                       
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Invalid input.");
+        }
+    }                                          
+
+
+    // Variables declaration - do not modify                     
+    private javax.swing.JButton back;
+    private javax.swing.JPanel bestsellingitems_container;
+    private javax.swing.JLabel bg;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private com.toedter.calendar.JMonthChooser jMonthChooser1;
+    private com.toedter.calendar.JYearChooser jYearChooser1DASHBOARD;
+    private javax.swing.JLabel oID;
+    private javax.swing.JLabel oID1;
+    private javax.swing.JLabel oID2;
+    private javax.swing.JPanel profit_container;
+    private javax.swing.JButton refresh;
+    private javax.swing.JPanel sales_container;
+    private javax.swing.JButton searchdate;
+    // End of variables declaration                   
+
+}
