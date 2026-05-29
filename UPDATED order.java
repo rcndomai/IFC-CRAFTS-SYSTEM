@@ -213,7 +213,15 @@ public class order extends javax.swing.JPanel {
     private void loadOrderItemRecord(int orderId) {
         currentView = "Order_Items";
         try {
-            String sql = "SELECT * FROM Order_Items WHERE order_id = ?";
+            String sql =
+                "SELECT oi.order_id, " +
+                "oi.product_id, " +
+                "p.product_name, " +
+                "oi.quantity, " +
+                "oi.price_at_order " +
+                "FROM Order_Items oi " +
+                "JOIN Products p ON oi.product_id = p.product_id " +
+                "WHERE oi.order_id = ?";
 
             Connection conn = IFCDatabase.getConnection();
             PreparedStatement pst = conn.prepareStatement(sql);
@@ -224,8 +232,8 @@ public class order extends javax.swing.JPanel {
                 @Override
                 public boolean isCellEditable(int row, int column) {
 
-                    // Order ID, Product ID, and Price at Order NOT editable
-                    if (column == 0 || column == 1 || column == 3) {
+                    // Order ID, Product ID, Product Name and Price at Order NOT editable
+                    if (column == 0 || column == 1 || column == 2 || column == 4) {
                         return false;
                     }
 
@@ -236,6 +244,7 @@ public class order extends javax.swing.JPanel {
             model.setColumnIdentifiers(new String[]{
                 "Order ID",
                 "Product ID",
+                "Product Name",
                 "Quantity",
                 "Price at Order"
             });
@@ -249,10 +258,10 @@ public class order extends javax.swing.JPanel {
                 Object[] row = {
                     rs.getInt("order_id"),
                     rs.getInt("product_id"),
+                    rs.getString("product_name"),
                     rs.getInt("quantity"),
                     rs.getDouble("price_at_order")
-            };
-
+                };
                 model.addRow(row);
                 idList.add(rs.getInt("order_id"));
                 dataList.add(row);
@@ -612,9 +621,9 @@ public class order extends javax.swing.JPanel {
                     
                     PreparedStatement pst = conn.prepareStatement(sql);
                     pst.setInt(1,
-                        Integer.parseInt(model.getValueAt(i, 2).toString()));
+                        Integer.parseInt(model.getValueAt(i, 3).toString()));
                     pst.setDouble(2,
-                        Double.parseDouble(model.getValueAt(i, 3).toString()));
+                        Double.parseDouble(model.getValueAt(i, 4).toString()));
                     pst.setInt(3,
                         Integer.parseInt(model.getValueAt(i, 0).toString()));
                     pst.setInt(4,
