@@ -1,0 +1,154 @@
+    private void searchshipmentIDActionPerformed(java.awt.event.ActionEvent evt) {                                                 
+        String inputShipmentID =
+                JOptionPane.showInputDialog(
+                        this,
+                        "Enter Shipment ID:");
+
+        if (inputShipmentID == null
+                || inputShipmentID.trim().isEmpty()) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Please enter an ID.");
+
+            return;
+        }
+
+        try {
+
+            String sql =
+                    "SELECT shipment_id, order_id, "
+                    + "shipment_date, delivery_mode, "
+                    + "courier, shipment_status "
+                    + "FROM dbo.Shipments "
+                    + "WHERE CAST(shipment_id AS VARCHAR(30)) LIKE ?";
+
+            PreparedStatement pst =
+                    conn.prepareStatement(sql);
+
+            pst.setString(
+                    1,
+                    "%" + inputShipmentID.trim() + "%");
+
+            ResultSet rs =
+                    pst.executeQuery();
+
+            DefaultTableModel model =
+                    new DefaultTableModel() {
+
+                @Override
+                public boolean isCellEditable(
+                        int row,
+                        int column) {
+
+                    return column != 0 && column != 1;
+                }
+            };
+
+            model.setColumnIdentifiers(new String[]{
+                "Shipment ID",
+                "Order ID",
+                "Shipment Date",
+                "Delivery Mode",
+                "Courier",
+                "Status"
+            });
+
+            java.util.List<String> idList =
+                    new java.util.ArrayList<>();
+
+            java.util.List<Object[]> dataList =
+                    new java.util.ArrayList<>();
+
+            boolean found = false;
+
+            while (rs.next()) {
+
+                found = true;
+
+                String shipmentId =
+                        rs.getString("shipment_id");
+
+                Object[] row = new Object[]{
+                    shipmentId,
+                    rs.getInt("order_id"),
+                    rs.getDate("shipment_date"),
+                    rs.getString("delivery_mode"),
+                    rs.getString("courier"),
+                    rs.getString("shipment_status")
+                };
+
+                model.addRow(row);
+
+                idList.add(shipmentId);
+                dataList.add(row);
+            }
+
+            if (!found) {
+
+                JOptionPane.showMessageDialog(
+                        this,
+                        "No matching record found.");
+
+                rs.close();
+                pst.close();
+
+                return;
+            }
+
+            originalIds =
+                    idList.toArray(new String[0]);
+
+            originalData =
+                    dataList.toArray(new Object[0][]);
+
+            shipmenttable.setModel(model);
+
+            customizeShipmentTable();
+
+            shipmenttable.getColumnModel()
+                    .getColumn(2)
+                    .setCellEditor(
+                            new DateCellEditor());
+            
+            String[] deliverymodes = {
+                "Pick-up",
+                "Delivery",
+                "Meet-up"
+            };
+
+            JComboBox<String> deliveryCombo =
+                    new JComboBox<>(deliverymodes);
+
+            shipmenttable.getColumnModel()
+                    .getColumn(3)
+                    .setCellEditor(
+                            new DefaultCellEditor(deliveryCombo));
+
+            String[] statuses = {
+                "Pending",
+                "In Transit",
+                "Delivered",
+                "Failed",
+                "Cancelled"
+            };
+
+            JComboBox<String> comboBox =
+                    new JComboBox<>(statuses);
+
+            shipmenttable.getColumnModel()
+                    .getColumn(5)
+                    .setCellEditor(
+                            new DefaultCellEditor(comboBox));
+
+            rs.close();
+            pst.close();
+
+        } catch (Exception e) {
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Search error: "
+                    + e.getMessage());
+        }
+    }       
